@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 type Variant = "all" | "expenses" | "ads" | "capital" | "recent";
 
-const SIGN: Record<string, 1 | -1 | 0> = { expense: -1, withdrawal: -1, income: 1, investment: 1, transfer: 0 };
+const SIGN: Record<string, 1 | -1 | 0> = { expense: -1, withdrawal: -1, income: 1, investment: 1, transfer: 0, profit_share: 1 };
 
 export function LedgerTable({ rows, t, lang, variant, businessId, canWrite, accounts, partners, exportName, emptyText, emptyAction }: {
   rows: Txn[]; t: Dict; lang: Lang; variant: Variant; businessId: string; canWrite: boolean;
@@ -105,11 +105,11 @@ export function LedgerTable({ rows, t, lang, variant, businessId, canWrite, acco
       id: "actions", header: () => <span className="sr-only">{t.actions}</span>, enableSorting: false, enableHiding: false, meta: { className: "w-20 pr-2" },
       cell: ({ row }) => {
         const r = row.original;
-        const label = `${r.txn_type === "expense" || r.txn_type === "withdrawal" || r.txn_type === "transfer" ? t.voucher : t.receipt} · ${docNo(r.txn_type, r.doc_no)}`;
+        const label = `${r.txn_type === "profit_share" ? t.creditNote : r.txn_type === "expense" || r.txn_type === "withdrawal" || r.txn_type === "transfer" ? t.voucher : t.receipt} · ${docNo(r.txn_type, r.doc_no)}`;
         return (
           <div className="flex items-center justify-end gap-0.5">
             <DocumentMenu t={t} href={`/doc/voucher/${r.id}`} label={label} variant="ghost" iconOnly />
-            {canWrite && r.status === "posted" && (
+            {canWrite && r.status === "posted" && r.txn_type !== "profit_share" && (
               <Menu>
                 <MenuTrigger asChild><Button variant="ghost" size="icon-sm" aria-label={t.actions}><MoreHorizontal /></Button></MenuTrigger>
                 <MenuContent>
@@ -143,7 +143,7 @@ function sourceLabel(r: Txn, accounts: Record<string, string>, partners: Record<
 function TypeBadge({ type, t }: { type: string; t: Dict }) {
   const map: Record<string, { v: "neutral" | "success" | "destructive" | "brand"; I: typeof ArrowUpRight }> = {
     expense: { v: "neutral", I: ArrowUpRight }, withdrawal: { v: "destructive", I: ArrowUpRight },
-    income: { v: "success", I: ArrowDownLeft }, investment: { v: "success", I: ArrowDownLeft }, transfer: { v: "brand", I: ArrowLeftRight },
+    income: { v: "success", I: ArrowDownLeft }, investment: { v: "success", I: ArrowDownLeft }, transfer: { v: "brand", I: ArrowLeftRight }, profit_share: { v: "brand", I: ArrowDownLeft },
   };
   const m = map[type] ?? map.expense;
   return <Badge variant={m.v}><m.I /> {t.txnTypes[type]}</Badge>;

@@ -22,9 +22,16 @@ const L = {
     totalWithdrawn: "Total withdrawn", netCapital: "Net capital balance", ref: "Ref.", type: "Type", investment: "Investment", withdrawal: "Withdrawal",
     balance: "Balance", openingBalance: "Opening balance", noEntries: "No capital entries in this period.",
     stamp: { paid: "PAID", due: "DUE", cod: "CASH ON DELIVERY", cancelled: "CANCELLED", returned: "RETURNED", void: "VOID", reversal: "REVERSAL" },
-    statusText: { paid: "Paid", due: "Due", cancelled: "Cancelled", returned: "Returned", void: "Reversed", posted: "Posted", reversal: "Reversal entry" },
+    statusText: { paid: "Paid", due: "Due", cancelled: "Cancelled", returned: "Returned", void: "Reversed", posted: "Posted", reversal: "Reversal entry", final: "Final" },
     computer: "This is a computer-generated document.", generated: "Generated",
     print: "Print", download: "Download PDF", other: "বাংলা",
+    creditNoteTitle: "Profit Share Credit Note", creditedTo: "Credited to", creditedAs: "Credited as", creditedAsText: "Partner capital (profit share)",
+    settlementTitle: "Profit Distribution Statement", settlementNo: "Settlement no.", revenue: "Revenue (delivered orders)", cogs: "Cost of goods",
+    directCosts: "Delivery & order costs", grossProfit: "Gross profit", opex: "Operating expenses", otherIncome: "Other income",
+    netProfit: "Net profit for the period", carriedLoss: "Loss brought forward", distributable: "Profit distributed", carryOut: "Loss carried forward",
+    shareCol: "Share", paidCol: "Paid out", retainedCol: "Retained in business", totalInvestedShort: "Invested", profitCredited: "Profit credited",
+    lossNote: "This period made a loss. No profit is distributed; the loss is recovered from future profits first.",
+    voidNote: "This settlement was undone and all its entries reversed.", profitShareRow: "Profit share", preparedOn: "Prepared",
   },
   bn: {
     invoice: "ইনভয়েস", paymentVoucher: "পেমেন্ট ভাউচার", moneyReceipt: "মানি রিসিট", withdrawalVoucher: "উত্তোলন ভাউচার",
@@ -42,9 +49,16 @@ const L = {
     totalWithdrawn: "মোট উত্তোলন", netCapital: "নিট মূলধন", ref: "রেফ.", type: "ধরন", investment: "বিনিয়োগ", withdrawal: "উত্তোলন",
     balance: "ব্যালেন্স", openingBalance: "প্রারম্ভিক ব্যালেন্স", noEntries: "এই সময়ে কোনো মূলধন এন্ট্রি নেই।",
     stamp: { paid: "পরিশোধিত", due: "বাকি", cod: "ক্যাশ অন ডেলিভারি", cancelled: "বাতিল", returned: "রিটার্ন", void: "বাতিল", reversal: "রিভার্সাল" },
-    statusText: { paid: "পরিশোধিত", due: "বাকি", cancelled: "বাতিল", returned: "রিটার্ন", void: "বাতিল করা হয়েছে", posted: "পোস্টেড", reversal: "বাতিলের এন্ট্রি" },
+    statusText: { paid: "পরিশোধিত", due: "বাকি", cancelled: "বাতিল", returned: "রিটার্ন", void: "বাতিল করা হয়েছে", posted: "পোস্টেড", reversal: "বাতিলের এন্ট্রি", final: "চূড়ান্ত" },
     computer: "এটি কম্পিউটারে তৈরি একটি ডকুমেন্ট।", generated: "তৈরি",
     print: "প্রিন্ট", download: "PDF ডাউনলোড", other: "English",
+    creditNoteTitle: "লাভের ভাগ জমা নোট", creditedTo: "যার নামে জমা", creditedAs: "জমার ধরন", creditedAsText: "পার্টনারের মূলধন (লাভের ভাগ)",
+    settlementTitle: "লাভ বণ্টন বিবরণী", settlementNo: "সেটেলমেন্ট নং", revenue: "বিক্রি (ডেলিভারড অর্ডার)", cogs: "পণ্যের খরচ",
+    directCosts: "ডেলিভারি ও অর্ডারের খরচ", grossProfit: "মোট লাভ", opex: "পরিচালন খরচ", otherIncome: "অন্যান্য আয়",
+    netProfit: "এই সময়ের নিট লাভ", carriedLoss: "আগের লোকসান", distributable: "বণ্টিত লাভ", carryOut: "পরের সময়ে যাওয়া লোকসান",
+    shareCol: "ভাগ", paidCol: "দেওয়া হয়েছে", retainedCol: "ব্যবসায় রাখা", totalInvestedShort: "বিনিয়োগ", profitCredited: "লাভ জমা",
+    lossNote: "এই সময়ে লোকসান হয়েছে। কোনো লাভ বণ্টন হয়নি; পরের লাভ থেকে আগে এই লোকসান পূরণ হবে।",
+    voidNote: "এই সেটেলমেন্ট বাতিল করা হয়েছে এবং এর সব এন্ট্রি উল্টে দেওয়া হয়েছে।", profitShareRow: "লাভের ভাগ", preparedOn: "প্রস্তুত",
   },
 };
 type Lx = (typeof L)["en"];
@@ -173,6 +187,7 @@ table.items th.r{text-align:right}table.items th.c{text-align:center}
 .sig .who{color:#0a0a0a;font-weight:600;font-size:9pt;margin-bottom:4px;min-height:14px;line-height:1.35}
 .fine{margin-top:20px;text-align:center;font-size:7.5pt;color:#9ca3af}
 .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.summary.four{grid-template-columns:repeat(4,1fr)}
 .summary .v{font-size:14pt;font-weight:700;margin-top:2px}
 .neg{color:#b91c1c}
 .toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:center;gap:8px;padding:10px;background:rgba(244,244,245,.9);backdrop-filter:blur(8px);border-bottom:1px solid #e4e4e7;font-family:'DocSans',system-ui,sans-serif}
@@ -256,6 +271,7 @@ ${fine(t, lang)}</div>`;
 }
 
 function voucherTitle(x: Txn, t: Lx) {
+  if (x.txn_type === "profit_share") return t.creditNoteTitle;
   return x.txn_type === "expense" ? t.paymentVoucher : x.txn_type === "withdrawal" ? t.withdrawalVoucher : x.txn_type === "transfer" ? t.transferVoucher : t.moneyReceipt;
 }
 function voucherBody(d: Extract<DocData, { kind: "voucher" }>, lang: DocLang, t: Lx) {
@@ -287,13 +303,18 @@ function voucherBody(d: Extract<DocData, { kind: "voucher" }>, lang: DocLang, t:
     case "transfer":
       add(t.fromAccount, x.account); add(t.toAccount, x.to_account); add(t.purpose, x.title);
       break;
+    case "profit_share":
+      add(t.creditedTo, x.partner); add(t.creditedAs, t.creditedAsText); add(t.purpose, x.title);
+      break;
   }
   add(t.description, x.description); add(t.reference, x.reference);
   if (x.reversal_reason) add(t.reason, x.reversal_reason);
   const meta: [string, string][] = [[t.no, `<strong>${esc(no)}</strong>`], [t.date, esc(date(x.txn_date, lang))],
     [t.status, pill(t.statusText[state], state === "posted" ? "ok" : "bad")]];
   const who = x.txn_type === "expense" ? null : x.partner;
-  const sigList = x.txn_type === "investment" || x.txn_type === "income"
+  const sigList = x.txn_type === "profit_share"
+    ? [{ label: t.preparedBy, who: x.created_by_name }, { label: t.authSig, who: d.brand.signatory }]
+    : x.txn_type === "investment" || x.txn_type === "income"
     ? [{ label: t.preparedBy, who: x.created_by_name }, { label: t.receivedBy, who: d.brand.signatory }]
     : [{ label: t.preparedBy, who: x.created_by_name }, { label: t.approvedBy, who: d.brand.signatory }, { label: t.receivedBy, who }];
   return `${header(d.brand, voucherTitle(x, t), meta, lang)}
@@ -315,30 +336,66 @@ function statementBody(d: Extract<DocData, { kind: "statement" }>, lang: DocLang
   <div class="box"><dl class="kv"><dt>${esc(t.period)}</dt><dd>${esc(period)}</dd>
     ${d.partner.share !== null ? `<dt>${esc(t.profitShare)}</dt><dd>${num(d.partner.share, lang)}%</dd>` : ""}</dl></div>
 </div>
-<div class="summary">${sum(t.totalInvested, d.totals.invested)}${sum(t.totalWithdrawn, d.totals.withdrawn)}${sum(t.netCapital, d.totals.balance, d.totals.balance < 0 ? "neg" : "")}</div>
+<div class="summary${d.totals.profit ? " four" : ""}">${sum(t.totalInvested, d.totals.invested)}${d.totals.profit ? sum(t.profitCredited, d.totals.profit) : ""}${sum(t.totalWithdrawn, d.totals.withdrawn)}${sum(t.netCapital, d.totals.balance, d.totals.balance < 0 ? "neg" : "")}</div>
 <table class="items"><thead><tr><th>${esc(t.date)}</th><th>${esc(t.ref)}</th><th>${esc(t.description)}</th><th class="r">${esc(t.investment)}</th><th class="r">${esc(t.withdrawal)}</th><th class="r">${esc(t.balance)}</th></tr></thead>
 <tbody>${d.rows.length ? d.rows.map((r) => r.type === "opening"
     ? `<tr><td>${esc(date(r.date, lang))}</td><td></td><td class="muted">${esc(t.openingBalance)}</td><td></td><td></td><td class="r"><strong>${money(r.balance, lang)}</strong></td></tr>`
-    : `<tr><td>${esc(date(r.date, lang))}</td><td class="sub">${esc(r.no)}</td><td>${esc(r.note || (r.type === "investment" ? t.investment : t.withdrawal))}</td>
+    : `<tr><td>${esc(date(r.date, lang))}</td><td class="sub">${esc(r.no)}</td><td>${esc(r.type === "profit_share" ? `${t.profitShareRow}${r.note ? " · " + r.note.replace(/^Profit share\s*/i, "") : ""}` : r.note || (r.type === "investment" ? t.investment : t.withdrawal))}</td>
       <td class="r">${r.in ? money(r.in, lang) : ""}</td><td class="r">${r.out ? money(r.out, lang) : ""}</td><td class="r"><strong>${r.balance < 0 ? "−" : ""}${money(r.balance, lang)}</strong></td></tr>`).join("")
     : `<tr><td colspan="6" class="c muted" style="padding:22px">${esc(t.noEntries)}</td></tr>`}</tbody></table>
 <div class="foot">${sigs([{ label: t.partnerSig, who: d.partner.name }, { label: t.authSig, who: d.brand.signatory }])}${fine(t, lang)}</div>`;
+}
+
+function settlementBody(d: Extract<DocData, { kind: "settlement" }>, lang: DocLang, t: Lx) {
+  const x = d.s;
+  const pl = x.pnl as Record<string, number | string>;
+  const v = (k: string) => Number(pl[k] ?? 0);
+  const isVoid = x.status === "void";
+  const meta: [string, string][] = [[t.settlementNo, `<strong>#${num(x.no, lang)}</strong>`], [t.period, esc(`${date(x.period_from, lang)} – ${date(x.period_to, lang)}`)],
+    [t.status, pill(isVoid ? t.statusText.void : t.statusText.final, isVoid ? "bad" : "ok")]];
+  const line = (k: string, n: number, cls = "") => `<tr class="${cls}"><td>${esc(k)}</td><td>${n < 0 ? "−" : ""}${money(n, lang)}</td></tr>`;
+  const pnlRows = [
+    line(t.revenue, v("revenue")), line(t.cogs, -v("cogs")), line(t.directCosts, -v("direct_costs")),
+    line(t.grossProfit, v("gross_profit"), "sub"), line(t.opex, -v("operating_expenses")),
+    ...(v("other_income") ? [line(t.otherIncome, v("other_income"))] : []),
+    line(t.netProfit, x.net_profit, "grand"),
+    ...(x.carry_in ? [line(t.carriedLoss, -x.carry_in)] : []),
+    line(t.distributable, x.distributable, "due"),
+    ...(x.carry_out ? [line(t.carryOut, x.carry_out)] : []),
+  ].join("");
+  const tot = x.rows.reduce((a, r) => ({ share: a.share + r.share, paid: a.paid + r.paid, ret: a.ret + r.retained }), { share: 0, paid: 0, ret: 0 });
+  return `${header(d.brand, t.settlementTitle, meta, lang)}
+<div class="rule"></div>
+${isVoid ? `<div class="stampwrap"><div class="stamp due ${lang}" style="right:20px;top:-4px">${esc(t.stamp.void)}</div></div>` : ""}
+<div class="after" style="margin-top:0">
+  <div class="words">${x.note ? `<div class="lbl">${esc(t.description)}</div><div>${esc(x.note)}</div>` : ""}
+    ${isVoid ? `<p class="muted" style="margin-top:8px">${esc(t.voidNote)}${x.void_reason ? ` ${esc(t.reason)}: ${esc(x.void_reason)}` : ""}</p>` : ""}
+    ${x.distributable === 0 && !isVoid ? `<p class="muted" style="margin-top:8px">${esc(t.lossNote)}</p>` : ""}</div>
+  <table class="totals" style="width:320px">${pnlRows}</table>
+</div>
+${x.rows.length && x.distributable > 0 ? `<table class="items"><thead><tr><th>${esc(t.partner)}</th><th class="r">%</th><th class="r">${esc(t.shareCol)}</th><th class="r">${esc(t.paidCol)}</th><th class="r">${esc(t.retainedCol)}</th></tr></thead>
+<tbody>${x.rows.map((r) => `<tr><td>${esc(r.name)}</td><td class="r">${num(r.percentage, lang)}%</td><td class="r"><strong>${money(r.share, lang)}</strong></td><td class="r">${money(r.paid, lang)}</td><td class="r">${money(r.retained, lang)}</td></tr>`).join("")}
+<tr><td><strong>${esc(t.total)}</strong></td><td class="r">${num(100, lang)}%</td><td class="r"><strong>${money(tot.share, lang)}</strong></td><td class="r"><strong>${money(tot.paid, lang)}</strong></td><td class="r"><strong>${money(tot.ret, lang)}</strong></td></tr></tbody></table>` : ""}
+<div class="foot">${sigs([{ label: t.preparedBy, who: x.created_by_name }, ...x.rows.slice(0, 2).map((r) => ({ label: t.partnerSig, who: r.name })), { label: t.authSig, who: d.brand.signatory }].slice(0, 4))}${fine(t, lang)}</div>`;
 }
 
 export function documentTitle(d: DocData, lang: DocLang) {
   const t = L[lang];
   if (d.kind === "invoice") return `${invoiceNo(d.order.order_no)}`;
   if (d.kind === "voucher") return `${docNo(d.txn.txn_type, d.txn.doc_no)}`;
+  if (d.kind === "settlement") return `${t.settlementTitle} #${d.s.no}`;
   return `${t.statement} — ${d.partner.name}`;
 }
 export function fileName(d: DocData, lang: DocLang) {
-  const base = d.kind === "statement" ? `Capital-Statement-${d.partner.name}` : documentTitle(d, lang);
+  const base = d.kind === "statement" ? `Capital-Statement-${d.partner.name}`
+    : d.kind === "settlement" ? `Profit-Distribution-${d.s.no}-${d.s.period_from}-to-${d.s.period_to}` : documentTitle(d, lang);
   return `${d.brand.name}-${base}-${lang}`.replace(/[^\p{L}\p{N}._-]+/gu, "-").replace(/-+/g, "-") + ".pdf";
 }
 
 export function renderDocument(d: DocData, lang: DocLang, opts: { toolbar?: { pdf: string; other: string } } = {}) {
   const t = L[lang];
-  const body = d.kind === "invoice" ? invoiceBody(d, lang, t) : d.kind === "voucher" ? voucherBody(d, lang, t) : statementBody(d, lang, t);
+  const body = d.kind === "invoice" ? invoiceBody(d, lang, t) : d.kind === "voucher" ? voucherBody(d, lang, t)
+    : d.kind === "settlement" ? settlementBody(d, lang, t) : statementBody(d, lang, t);
   const toolbar = opts.toolbar
     ? `<div class="toolbar"><button onclick="window.print()">${esc(t.print)}</button><a class="primary" href="${esc(opts.toolbar.pdf)}">${esc(t.download)}</a><a href="${esc(opts.toolbar.other)}">${esc(t.other)}</a></div>`
     : "";

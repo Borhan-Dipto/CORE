@@ -468,3 +468,54 @@ export async function saveInvoiceSettings(_: FormState, fd: FormData): Promise<F
   refresh(businessId);
   return ok("saved");
 }
+
+// ---------- Profit settlement ----------
+export async function previewSettlement(businessId: string, from: string, to: string): Promise<{ preview?: import("@/lib/settlements").Preview; error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("settlement_preview", { p_business: businessId, p_from: from, p_to: to });
+  if (error) return { error: (await fail(error)).error };
+  const p = data as Record<string, unknown>;
+  const n = (v: unknown) => Number(v ?? 0);
+  return {
+    preview: {
+      period_from: String(p.period_from), period_to: String(p.period_to), next_from: (p.next_from as string) ?? null,
+      net_profit: n(p.net_profit), carry_in: n(p.carry_in), distributable: n(p.distributable), carry_out: n(p.carry_out), shares_total: n(p.shares_total),
+      allocations: ((p.allocations as Record<string, unknown>[]) ?? []).map((a) => ({
+        partner_id: String(a.partner_id), name: (a.name as string) ?? null, percentage: n(a.percentage), share: n(a.share), active: !!a.active })),
+    },
+  };
+}
+
+export async function settleProfit(_: FormState, fd: FormData): Promise<FormState> {
+  const businessId = str(fd, "business_id");
+  let payouts: unknown = [];
+  try { payouts = JSON.parse(str(fd, "payouts") || "[]"); } catch { payouts = []; }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("settle_profit", {
+    p_business: businessId, p_from: str(fd, "from"), p_to: str(fd, "to"), p_payouts: payouts,
+    p_note: opt(fd, "note"), p_paid_on: opt(fd, "paid_on"),
+  });
+  if (error) return fail(error);
+  refresh(businessId);
+  return ok("settleDone");
+}
+
+export async function payProfit(_: FormState, fd: FormData): Promise<FormState> {
+  const businessId = str(fd, "business_id");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("pay_profit", {
+    p_settlement: str(fd, "settlement_id"), p_partner: str(fd, "partner_id"), p_account: opt(fd, "account_id"),
+    p_amount: amount(fd), p_date: opt(fd, "date"),
+  });
+  if (error) return fail(error);
+  refresh(businessId);
+  return ok("saved");
+}
+
+export async function voidSettlement(settlementId: string, businessId: string, reason: string): Promise<FormState> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("void_settlement", { p_settlement: settlementId, p_reason: reason });
+  if (error) return fail(error);
+  refresh(businessId);
+  return ok("saved");
+}

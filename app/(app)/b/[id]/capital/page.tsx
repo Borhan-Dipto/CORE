@@ -15,7 +15,7 @@ export default async function CapitalPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const p = await loadBizPage(id, { range: "all" });
   const { t, lang, members } = p;
-  const rows = await getTransactions(id, p.range, { types: ["investment", "withdrawal"] });
+  const rows = await getTransactions(id, p.range, { types: ["investment", "withdrawal", "profit_share"] });
   const total = { invested: 0, withdrawn: 0, capital: 0 };
   members.forEach((m) => { total.invested += m.invested; total.withdrawn += m.withdrawn; total.capital += m.capital; });
   return (
@@ -43,7 +43,7 @@ export default async function CapitalPage({ params }: { params: Promise<{ id: st
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-chart-1" style={{ width: `${pct}%` }} /></div>
               <p className="mt-1 text-xs text-muted-foreground">{fmtNum(Math.round(pct), lang)}% {t.of} {t.kpiCapital.toLowerCase()}</p>
               <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs">
-                {[[t.invested, m.invested], [t.paidPersonally, m.paidPersonally], [t.withdrawn, m.withdrawn]].map(([l, v]) => (
+                {[[t.invested, m.invested], [t.profitCredited, m.profitCredited], [t.withdrawn, m.withdrawn]].map(([l, v]) => (
                   <div key={String(l)} className="min-w-0"><dt className="truncate text-muted-foreground">{l}</dt><dd className="tabular truncate font-medium">{fmtMoney(Number(v), lang, { compact: true })}</dd></div>
                 ))}
               </dl>

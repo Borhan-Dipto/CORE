@@ -5,7 +5,7 @@ import type { DateRange } from "@/lib/range";
 
 export type Member = {
   id: string; user_id: string; joined_at: string; name: string; email: string; isOwner: boolean;
-  percentage: number | null; invested: number; withdrawn: number; capital: number; paidPersonally: number;
+  percentage: number | null; invested: number; withdrawn: number; capital: number; paidPersonally: number; profitCredited: number;
 };
 export type Account = { id: string; name: string; type: string; is_active: boolean; opening_balance: number; money_in: number; money_out: number; balance: number };
 export type Category = { id: string; name: string; is_advertising: boolean; is_active: boolean };
@@ -41,13 +41,13 @@ export const getMembers = cache(async (businessId: string): Promise<Member[]> =>
   return (rows ?? []).map((r) => {
     const p = profiles?.find((x) => x.id === r.user_id);
     const s = (shares as { user_id: string; percentage: number }[] | null)?.find((x) => x.user_id === r.user_id);
-    const c = (capital as { partner_id: string; invested: number; withdrawn: number; balance: number; paid_expenses: number }[] | null)?.find((x) => x.partner_id === r.user_id);
+    const c = (capital as { partner_id: string; invested: number; withdrawn: number; balance: number; paid_expenses: number; profit_credited: number }[] | null)?.find((x) => x.partner_id === r.user_id);
     return {
       id: r.id, user_id: r.user_id, joined_at: r.joined_at,
       name: p?.full_name || p?.email || "—", email: p?.email ?? "",
       isOwner: r.user_id === biz?.created_by || (isOwner && r.user_id === user.id),
       percentage: s ? num(s.percentage) : null,
-      invested: num(c?.invested), withdrawn: num(c?.withdrawn), capital: num(c?.balance), paidPersonally: num(c?.paid_expenses),
+      invested: num(c?.invested), withdrawn: num(c?.withdrawn), capital: num(c?.balance), paidPersonally: num(c?.paid_expenses), profitCredited: num(c?.profit_credited),
     };
   });
 });
