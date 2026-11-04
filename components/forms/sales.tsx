@@ -112,15 +112,17 @@ function OrderForm({ t, lang, businessId, products, campaigns, onDone }: {
   const setLine = (k: number, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === k ? { ...l, ...patch } : l)));
   const pick = (k: number, id: string) => {
     const p = active.find((x) => x.id === id);
-    setLine(k, p ? { product_id: p.id, product_name: p.name, unit_price: String(p.sell_price), unit_cost: String(p.cost_price) } : { product_id: "" });
+    setLine(k, p ? { product_id: p.id, product_name: p.name, unit_price: String(p.sell_price) } : { product_id: "" });
   };
   const items = lines.filter((l) => l.product_id || l.product_name.trim());
   const sub = items.reduce((s, l) => s + n(l.qty) * n(l.unit_price), 0);
-  const cogs = items.reduce((s, l) => s + n(l.qty) * n(l.unit_cost), 0);
+  const catalogCost = (l: Line) => active.find((x) => x.id === l.product_id)?.cost_price ?? 0;
+  const lineCost = (l: Line) => (l.unit_cost.trim() === "" ? catalogCost(l) : n(l.unit_cost));
+  const cogs = items.reduce((s, l) => s + n(l.qty) * lineCost(l), 0);
   const total = sub - n(money.discount) + n(money.delivery_charge);
   const direct = n(money.courier_cost) + n(money.packaging_cost) + n(money.cod_fee) + n(money.other_cost);
   const profit = total - cogs - direct;
-  const payload = JSON.stringify(items.map((l) => ({ product_id: l.product_id || undefined, product_name: l.product_name, qty: Math.max(1, Math.round(n(l.qty))), unit_price: n(l.unit_price), unit_cost: n(l.unit_cost) })));
+  const payload = JSON.stringify(items.map((l) => ({ product_id: l.product_id || undefined, product_name: l.product_name, qty: Math.max(1, Math.round(n(l.qty))), unit_price: n(l.unit_price), unit_cost: l.unit_cost.trim() === "" ? undefined : n(l.unit_cost) })));
 
   return (
     <form action={run} className="grid gap-5">
@@ -130,9 +132,12 @@ function OrderForm({ t, lang, businessId, products, campaigns, onDone }: {
 
       <section className="grid gap-2">
         <p className="text-[13px] font-medium">{t.items}</p>
+        <div className="hidden grid-cols-[1fr_64px_96px_96px_32px] gap-2 px-0.5 text-xs text-muted-foreground sm:grid">
+          <span>{t.product}</span><span className="text-center">{t.qty}</span><span>{t.sellPrice}</span><span>{t.unitCost}</span><span />
+        </div>
         {lines.map((l) => (
-          <div key={l.key} className="grid grid-cols-[64px_1fr_auto] items-center gap-2 rounded-lg border border-border p-2.5 sm:grid-cols-[1fr_64px_96px_auto] sm:border-0 sm:p-0">
-            <div className="col-span-3 sm:col-span-1">
+          <div key={l.key} className="grid grid-cols-[56px_1fr_1fr_auto] items-center gap-2 rounded-lg border border-border p-2.5 sm:grid-cols-[1fr_64px_96px_96px_32px] sm:border-0 sm:p-0">
+            <div className="col-span-4 sm:col-span-1">
               {active.length > 0 ? (
                 <Select value={l.product_id} onValueChange={(v) => pick(l.key, v)} placeholder={t.product}
                   options={active.map((p) => ({ value: p.id, label: p.name, hint: `${fmtMoney(p.sell_price, lang)} · ${t.unitCost} ${fmtMoney(p.cost_price, lang)}` }))} />
@@ -141,7 +146,9 @@ function OrderForm({ t, lang, businessId, products, campaigns, onDone }: {
               )}
             </div>
             <Input value={l.qty} onChange={(e) => setLine(l.key, { qty: e.target.value })} inputMode="numeric" aria-label={t.qty} className="tabular text-center" />
-            <MoneyInput value={l.unit_price} onChange={(e) => setLine(l.key, { unit_price: e.target.value })} aria-label={t.unitPrice} placeholder={t.unitPrice} />
+            <MoneyInput value={l.unit_price} onChange={(e) => setLine(l.key, { unit_price: e.target.value })} aria-label={t.sellPrice} placeholder={t.sellPrice} />
+            <MoneyInput value={l.unit_cost} onChange={(e) => setLine(l.key, { unit_cost: e.target.value })} aria-label={t.unitCost}
+              placeholder={catalogCost(l) ? String(catalogCost(l)) : t.unitCost} title={t.unitCostHint} />
             <Button type="button" variant="ghost" size="icon-sm" aria-label={t.removeItem} disabled={lines.length === 1}
               onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}><Trash2 /></Button>
           </div>

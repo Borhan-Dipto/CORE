@@ -115,7 +115,7 @@ const en = {
   // sales
   sales: "Sales", orders: "Orders", products: "Products", pnl: "Profit & loss", newOrder: "New order", importOrders: "Import",
   orderNo: "Order", customer: "Customer", customerName: "Customer name", customerPhone: "Phone", customerAddress: "Address",
-  items: "Items", product: "Product", qty: "Qty", unitPrice: "Price", unitCost: "Cost", addItem: "Add item", removeItem: "Remove",
+  items: "Items", product: "Product", qty: "Qty", unitPrice: "Price", unitCost: "Cost", unitCostHint: "Buying cost per unit. Leave empty to use the product's saved cost.", addItem: "Add item", removeItem: "Remove",
   source: "Source", courier: "Courier", trackingNo: "Tracking no.", deliveryCharge: "Delivery charge (customer)", discount: "Discount",
   courierCost: "Courier cost", packagingCost: "Packaging", codFee: "COD fee", otherCost: "Other cost", orderCosts: "Order costs",
   orderCostsHint: "What this order cost you. Don't also record these as separate expenses.",
@@ -287,7 +287,7 @@ const bn: typeof en = {
   err_duplicate_name: "এই নাম এই বিজনেসে আগেই আছে।", err_generic: "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
   sales: "বিক্রি", orders: "অর্ডার", products: "প্রোডাক্ট", pnl: "লাভ-ক্ষতি", newOrder: "নতুন অর্ডার", importOrders: "ইমপোর্ট",
   orderNo: "অর্ডার", customer: "কাস্টমার", customerName: "কাস্টমারের নাম", customerPhone: "ফোন", customerAddress: "ঠিকানা",
-  items: "প্রোডাক্ট", product: "প্রোডাক্ট", qty: "পরিমাণ", unitPrice: "দাম", unitCost: "কেনা দাম", addItem: "আরেকটা প্রোডাক্ট", removeItem: "সরান",
+  items: "প্রোডাক্ট", product: "প্রোডাক্ট", qty: "পরিমাণ", unitPrice: "দাম", unitCost: "কেনা দাম", unitCostHint: "প্রতি পিসের কেনা দাম। ফাঁকা রাখলে প্রোডাক্টে সেভ করা দাম ধরা হবে।", addItem: "আরেকটা প্রোডাক্ট", removeItem: "সরান",
   source: "কোথা থেকে", courier: "কুরিয়ার", trackingNo: "ট্র্যাকিং নম্বর", deliveryCharge: "ডেলিভারি চার্জ (কাস্টমার দেবে)", discount: "ছাড়",
   courierCost: "কুরিয়ার খরচ", packagingCost: "প্যাকেজিং", codFee: "COD চার্জ", otherCost: "অন্যান্য খরচ", orderCosts: "অর্ডারের খরচ",
   orderCostsHint: "এই অর্ডারে আপনার যা খরচ হয়েছে। এগুলো আলাদা খরচ হিসেবে আবার লিখবেন না।",
