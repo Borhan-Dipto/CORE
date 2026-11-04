@@ -40,6 +40,39 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           </div>
 
           {active.length > 1 && (
+            <Card className="overflow-hidden">
+              <CardHeader><CardTitle>{t.compareTitle}</CardTitle><CardDescription>{t.compareDesc}</CardDescription></CardHeader>
+              <div className="relative overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead><tr className="border-y border-border bg-muted/40 text-left text-xs text-muted-foreground">
+                    {[t.businesses, t.kpiRevenue, t.kpiNet, t.marginLabel, t.kpiAdSpend, t.kpiRoas, t.kpiCash].map((h, i) => (
+                      <th key={h} className={`px-4 py-2.5 font-medium ${i ? "text-right" : ""}`}>{h}</th>))}
+                  </tr></thead>
+                  <tbody>
+                    {[...active].sort((a, b) => b.net_profit - a.net_profit).map((r, i) => {
+                      const margin = r.revenue > 0 ? (r.net_profit / r.revenue) * 100 : null;
+                      const roas = r.ad_spend > 0 ? r.revenue / r.ad_spend : null;
+                      return (
+                        <tr key={r.business_id} className="border-b border-border last:border-0 hover:bg-muted/40">
+                          <td className="px-4 py-3"><Link href={`/b/${r.business_id}`} className="flex items-center gap-2.5 font-medium hover:underline">
+                            <span className="tabular w-4 text-xs text-muted-foreground">{fmtNum(i + 1, lang)}</span>
+                            <Avatar name={r.name} seed={r.business_id} size="sm" square />{r.name}</Link></td>
+                          <td className="tabular px-4 py-3 text-right">{fmtMoney(r.revenue, lang)}</td>
+                          <td className={`tabular px-4 py-3 text-right font-semibold ${r.net_profit < 0 ? "text-destructive" : r.net_profit > 0 ? "text-success" : ""}`}>{fmtMoney(r.net_profit, lang, { sign: true })}</td>
+                          <td className="tabular px-4 py-3 text-right">{margin === null ? "—" : `${fmtNum(margin, lang, 1)}%`}</td>
+                          <td className="tabular px-4 py-3 text-right">{fmtMoney(r.ad_spend, lang)}</td>
+                          <td className={`tabular px-4 py-3 text-right ${roas !== null && roas < 1 ? "text-destructive" : ""}`}>{roas === null ? "—" : `${fmtNum(roas, lang, 1)}×`}</td>
+                          <td className={`tabular px-4 py-3 text-right ${r.cash_balance < 0 ? "text-destructive" : ""}`}>{fmtMoney(r.cash_balance, lang)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+
+          {active.length > 1 && (
             <Card>
               <CardHeader><CardTitle>{t.comparison}</CardTitle><CardDescription>{t.comparisonDesc}</CardDescription></CardHeader>
               <CardContent>

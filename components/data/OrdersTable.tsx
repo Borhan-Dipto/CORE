@@ -3,7 +3,11 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ShoppingBag } from "lucide-react";
+import { Check, Copy, MoreHorizontal, ShoppingBag, X } from "lucide-react";
+import { toast } from "sonner";
+import { bulkSetOrderStatus, setOrderStatus } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "@/components/ui/overlay";
 import { DataTable, type ColMeta } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/card";
 import { EmptyState } from "@/components/shell/Page";
@@ -20,13 +24,52 @@ export const STATUS_TONE: Record<string, "neutral" | "brand" | "warning" | "succ
   pending: "warning", confirmed: "brand", shipped: "brand", delivered: "success", returned: "destructive", cancelled: "neutral",
 };
 
-export function OrdersTable({ rows, t, lang, businessId, empty }: { rows: OrderRow[]; t: Dict; lang: Lang; businessId: string; empty?: React.ReactNode }) {
+/** Where an order can go next from its current status (mirrors the database rules). */
+export function nextStatuses(r: { status: string; collected: boolean }): string[] {
+  if (r.collected) return [];
+  switch (r.status) {
+    case "pending": return ["confirmed", "shipped", "delivered", "cancelled"];
+    case "confirmed": return ["shipped", "delivered", "cancelled"];
+    case "shipped": return ["delivered", "returned", "cancelled"];
+    case "delivered": return ["returned"];
+    default: return [];
+  }
+}
+
+export function OrdersTable({ rows, t, lang, businessId, empty, canWrite }: { rows: OrderRow[]; t: Dict; lang: Lang; businessId: string; empty?: React.ReactNode; canWrite?: boolean }) {
   const router = useRouter();
   const [tab, setTab] = React.useState("all");
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [busy, startBusy] = React.useTransition();
+  React.useEffect(() => setSelected(new Set()), [tab]);
+  const toggle = (id: string) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const change = (id: string, status: string) => startBusy(async () => {
+    const r = await setOrderStatus(id, businessId, status);
+    if (r.error) toast.error(r.error); else toast.success(`${t.orderStatuses[status]} ✓`);
+  });
+  const bulk = (status: string) => startBusy(async () => {
+    const r = await bulkSetOrderStatus(businessId, [...selected], status);
+    if (r.done) toast.success(`${fmtNum(r.done, lang)} ${t.ordersUpdated}`);
+    if (r.failed) toast.error(`${fmtNum(r.failed, lang)} ${t.ordersNotUpdated}`);
+    setSelected(new Set());
+  });
   const counts = React.useMemo(() => rows.reduce<Record<string, number>>((a, r) => ((a[r.status] = (a[r.status] ?? 0) + 1), a), {}), [rows]);
   const data = tab === "all" ? rows : tab === "uncollected" ? rows.filter((r) => r.status === "delivered" && !r.collected) : rows.filter((r) => r.status === tab);
 
   const columns = React.useMemo<ColumnDef<OrderRow, unknown>[]>(() => [
+    ...(canWrite ? [{
+      id: "select", enableSorting: false, enableHiding: false, meta: { className: "w-9 pr-0" } satisfies ColMeta,
+      header: () => <span className="sr-only">{t.select}</span>,
+      cell: ({ row }: { row: { original: OrderRow } }) => {
+        const on = selected.has(row.original.id);
+        return (
+          <button type="button" data-noclick aria-pressed={on} aria-label={t.select} onClick={() => toggle(row.original.id)}
+            className={cn("flex size-4.5 items-center justify-center rounded border transition", on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-foreground/40")}>
+            {on && <Check className="size-3" />}
+          </button>
+        );
+      },
+    } as ColumnDef<OrderRow, unknown>] : []),
     {
       id: "order", accessorFn: (r) => `${r.order_no} ${r.tracking_no ?? ""}`, header: t.orderNo, meta: { label: t.orderNo, className: "w-32" } satisfies ColMeta,
       cell: ({ row }) => (
@@ -58,7 +101,16 @@ export function OrdersTable({ rows, t, lang, businessId, empty }: { rows: OrderR
     },
     {
       id: "courier", accessorFn: (r) => [r.courier, r.tracking_no].filter(Boolean).join(" "), header: t.courier, meta: { label: t.courier },
-      cell: ({ row }) => <div className="text-[13px]"><p>{row.original.courier || "—"}</p><p className="text-xs text-muted-foreground">{row.original.tracking_no}</p></div>,
+      cell: ({ row }) => (
+        <div className="text-[13px]"><p>{row.original.courier || "—"}</p>
+          {row.original.tracking_no && (
+            <button type="button" data-noclick title={t.copy} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              onClick={async () => { try { await navigator.clipboard.writeText(row.original.tracking_no!); toast.success(t.copied); } catch {} }}>
+              {row.original.tracking_no} <Copy className="size-3" />
+            </button>
+          )}
+        </div>
+      ),
     },
     {
       id: "total", accessorKey: "net_sales", header: t.orderTotal, meta: { label: t.orderTotal, align: "right", csv: (r: unknown) => (r as OrderRow).net_sales } satisfies ColMeta,
@@ -71,7 +123,30 @@ export function OrdersTable({ rows, t, lang, businessId, empty }: { rows: OrderR
         return <span className={cn("whitespace-nowrap", !counts ? "text-muted-foreground" : r.profit >= 0 ? "text-success" : "text-destructive")}>{fmtMoney(r.profit, lang, { sign: counts })}</span>;
       },
     },
-  ], [t, lang]);
+    ...(canWrite ? [{
+      id: "actions", enableSorting: false, enableHiding: false, meta: { className: "w-10 pr-2" } satisfies ColMeta,
+      header: () => <span className="sr-only">{t.actions}</span>,
+      cell: ({ row }: { row: { original: OrderRow } }) => {
+        const next = nextStatuses(row.original);
+        if (!next.length) return null;
+        return (
+          <div data-noclick>
+            <Menu>
+              <MenuTrigger asChild><Button variant="ghost" size="icon-sm" aria-label={t.changeStatus} disabled={busy}><MoreHorizontal /></Button></MenuTrigger>
+              <MenuContent>
+                <MenuLabel>{t.changeStatus}</MenuLabel>
+                {next.map((st) => (
+                  <MenuItem key={st} onSelect={() => change(row.original.id, st)} className={st === "cancelled" || st === "returned" ? "text-destructive" : undefined}>
+                    <Badge variant={STATUS_TONE[st]}>{t.orderStatuses[st]}</Badge>
+                  </MenuItem>
+                ))}
+              </MenuContent>
+            </Menu>
+          </div>
+        );
+      },
+    } as ColumnDef<OrderRow, unknown>] : []),
+  ], [t, lang, canWrite, selected, busy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tabs = ["all", "pending", "confirmed", "shipped", "delivered", "uncollected", "returned", "cancelled"];
   const toolbar = (
@@ -88,11 +163,35 @@ export function OrdersTable({ rows, t, lang, businessId, empty }: { rows: OrderR
       })}
     </div>
   );
+  const selRows = rows.filter((r) => selected.has(r.id));
+  const common = ["confirmed", "shipped", "delivered", "cancelled"].filter((st) => selRows.length > 0 && selRows.every((r) => nextStatuses(r).includes(st)));
+  const allVisible = data.length > 0 && data.every((r) => selected.has(r.id));
   return (
     <div onClick={(e) => {
+      if ((e.target as HTMLElement).closest("[data-noclick],[role=menu]")) return;
       const tr = (e.target as HTMLElement).closest("tbody tr") as HTMLElement | null;
       const id = tr?.dataset.id; if (id) router.push(`/b/${businessId}/orders/${id}`);
     }}>
+      {canWrite && data.length > 0 && (
+        <div data-noclick className={cn("mb-2 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-[13px] transition",
+          selected.size ? "border-brand/30 bg-brand-soft/50" : "border-transparent")}>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setSelected(allVisible ? new Set() : new Set(data.map((r) => r.id)))}>
+            {allVisible ? t.selectNone : t.selectAll}
+          </Button>
+          {selected.size > 0 && (
+            <>
+              <span className="font-medium">{fmtNum(selected.size, lang)} {t.selected}</span>
+              <span className="text-muted-foreground">·</span>
+              {common.length ? common.map((st) => (
+                <Button key={st} type="button" size="sm" variant={st === "cancelled" ? "destructive-outline" : "outline"} loading={busy} onClick={() => bulk(st)}>
+                  {t.markStatus.replace("{s}", t.orderStatuses[st])}
+                </Button>
+              )) : <span className="text-muted-foreground">{t.noCommonAction}</span>}
+              <Button type="button" variant="ghost" size="icon-sm" aria-label={t.clear} onClick={() => setSelected(new Set())} className="ml-auto"><X /></Button>
+            </>
+          )}
+        </div>
+      )}
       <DataTable data={data} columns={columns} t={t} toolbar={toolbar} exportName="orders" rowId={(r) => r.id}
         empty={empty ?? <div className="p-6"><EmptyState icon={ShoppingBag} title={t.noOrders} /></div>} />
     </div>

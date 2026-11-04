@@ -30,7 +30,7 @@ export default async function AdvertisingPage({ params, searchParams }: { params
   const days = Math.max(1, (chart ?? s).daily.length);
   const campaigns = new Set(rows.filter((r) => r.status === "posted" && r.campaign_name).map((r) => r.campaign_name)).size;
   return (
-    <Page wide title={t.advertising} actions={<><DateRange t={t} current={range.key} from={range.from} to={range.to} />{p.writable && <ExpenseDialog t={t} businessId={id} opts={p.opts} advertising />}</>}>
+    <Page wide title={t.advertising} actions={<><DateRange t={t} current={range.key} from={range.from} to={range.to} />{p.writable && <ExpenseDialog t={t} businessId={id} opts={p.opts} advertising openKey="boost" />}</>}>
       {!p.writable && <Notice tone="info">{t.readOnlyNote}</Notice>}
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Kpi label={t.kpiAdSpend} value={fmtMoney(s.ad_spend, lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} />

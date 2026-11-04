@@ -3,6 +3,7 @@ import { ArchiveButton, BusinessEditForm, DeleteBusinessButton } from "@/compone
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBusiness, getContext, getT, requireOwner } from "@/lib/session";
 import { InvoiceSettingsForm } from "@/components/documents";
+import { WebsiteSyncCard } from "@/components/forms/integration";
 
 export const metadata = { title: "Settings" };
 
@@ -10,12 +11,15 @@ export default async function SettingsPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   await requireOwner();
   const { supabase } = await getContext();
-  const [business, { t }, { data: inv }] = await Promise.all([getBusiness(id), getT(),
-    supabase.from("business_invoice_settings").select("logo_data, tagline, website, payment_info, policy_note, thank_you, signatory").eq("business_id", id).maybeSingle()]);
+  const [business, { t, lang }, { data: inv }, { data: integ }] = await Promise.all([getBusiness(id), getT(),
+    supabase.from("business_invoice_settings").select("logo_data, tagline, website, payment_info, policy_note, thank_you, signatory").eq("business_id", id).maybeSingle(),
+    supabase.from("business_integrations").select("token_hint, created_at, last_event_at, events_count, orders_created, last_error, last_error_at").eq("business_id", id).maybeSingle()]);
   const archived = business.status === "archived";
   return (
     <Page title={t.settings} className="max-w-3xl">
       <Card><CardHeader><CardTitle>{t.businessDetails}</CardTitle></CardHeader><CardContent><BusinessEditForm t={t} business={business} disabled={archived} /></CardContent></Card>
+      <Card id="website"><CardHeader><CardTitle>{t.syncTitle}</CardTitle><CardDescription>{t.syncDesc}</CardDescription></CardHeader>
+        <CardContent><WebsiteSyncCard t={t} lang={lang} businessId={id} integration={integ} disabled={archived} /></CardContent></Card>
       <Card id="invoice"><CardHeader><CardTitle>{t.invoiceSettings}</CardTitle><CardDescription>{t.invoiceSettingsHelp}</CardDescription></CardHeader>
         <CardContent><InvoiceSettingsForm t={t} businessId={id} settings={inv} disabled={archived} /></CardContent></Card>
       <Card className={archived ? "" : "border-destructive/25"}>

@@ -18,7 +18,7 @@ export default async function ExpensesPage({ params, searchParams }: { params: P
   const [s, rows] = await Promise.all([getSummary(id, range.from, range.to), getTransactions(id, range, { types: ["expense"] })]);
   const nonAd = s.expenses - s.ad_spend;
   return (
-    <Page wide title={t.expenses} actions={<><DateRange t={t} current={range.key} from={range.from} to={range.to} />{p.writable && <ExpenseDialog t={t} businessId={id} opts={p.opts} />}</>}>
+    <Page wide title={t.expenses} actions={<><DateRange t={t} current={range.key} from={range.from} to={range.to} />{p.writable && <ExpenseDialog t={t} businessId={id} opts={p.opts} openKey="expense" />}</>}>
       {!p.writable && <Notice tone="info">{t.readOnlyNote}</Notice>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Kpi label={t.kpiExpenses} value={fmtMoney(s.expenses, lang)} definition={t.kpiExpensesDef} hint={`${fmtNum(s.expense_count, lang)} ${t.rows}`} />

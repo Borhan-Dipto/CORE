@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/forgot", "/auth", "/invite", "/reset-password", "/api/cron"];
+const PUBLIC_PATHS = ["/login", "/forgot", "/auth", "/invite", "/reset-password", "/api/cron", "/api/hooks", "/manifest.webmanifest"];
 const INVITE_COOKIE = "core_invite";
 
 export async function middleware(request: NextRequest) {

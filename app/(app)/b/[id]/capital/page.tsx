@@ -19,7 +19,7 @@ export default async function CapitalPage({ params }: { params: Promise<{ id: st
   const total = { invested: 0, withdrawn: 0, capital: 0 };
   members.forEach((m) => { total.invested += m.invested; total.withdrawn += m.withdrawn; total.capital += m.capital; });
   return (
-    <Page wide title={t.capital} actions={p.writable && <><WithdrawalDialog t={t} businessId={id} opts={p.opts} /><InvestmentDialog t={t} businessId={id} opts={p.opts} /></>}>
+    <Page wide title={t.capital} actions={p.writable && <><WithdrawalDialog t={t} businessId={id} opts={p.opts} openKey="withdrawal" /><InvestmentDialog t={t} businessId={id} opts={p.opts} openKey="investment" /></>}>
       {!p.writable && <Notice tone="info">{t.readOnlyNote}</Notice>}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Kpi label={t.invested} value={fmtMoney(total.invested, lang)} definition={t.kpiInvestmentsDef} />

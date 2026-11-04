@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { loadBizPage } from "@/lib/bizpage";
 import { getSummary, getTransactions, getPendingInvites } from "@/lib/workspace";
 import { getPnl, getOrderSummary } from "@/lib/sales";
-import { chartRange } from "@/lib/range";
+import { chartRange, pctChange, previousRange } from "@/lib/range";
+import { getCampaignPerformance } from "@/lib/campaignPerf";
+import { Notice } from "@/components/shell/Page";
 import { fmtMoney, fmtNum } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +31,14 @@ export default async function Dashboard({ params, searchParams }: { params: Prom
     getPnl(id, range.from, range.to),
     getOrderSummary(id, range.from, range.to),
   ]);
+  const prevR = previousRange(range);
+  const [prevS, prevPl, campaigns] = await Promise.all([
+    prevR ? getSummary(id, prevR.from, prevR.to) : Promise.resolve(null),
+    prevR ? getPnl(id, prevR.from, prevR.to) : Promise.resolve(null),
+    getCampaignPerformance(id, range.from, range.to, os),
+  ]);
+  const vs = (cur: number, prev: number | undefined, invert = false) => prev === undefined ? undefined : { pct: pctChange(cur, prev), label: t.vsPrevious, invert, lang };
+  const weak = campaigns.filter((c) => c.spend >= 300 && (c.roas ?? 0) < 1 && c.campaign.trim());
   const daily = (chart ?? s).daily;
   const chartOs = range.key === "all" && os.delivered_count > 0 ? await getOrderSummary(id, cr.from, cr.to) : null;
   const hasSplit = members.some((m) => m.percentage !== null);
@@ -58,13 +68,20 @@ export default async function Dashboard({ params, searchParams }: { params: Prom
         </Card>
       )}
 
+      {weak.length > 0 && (
+        <Notice>
+          <span><strong>{t.roasAlert}</strong> {weak.slice(0, 3).map((c) => `${c.campaign} (${t.kpiRoas} ${fmtNum(c.roas ?? 0, lang, 1)}×)`).join(", ")}
+            {weak.length > 3 ? ` +${fmtNum(weak.length - 3, lang)}` : ""}. {t.roasAlertDesc}{" "}
+            <Link href={`/b/${id}/advertising`} className="font-medium underline underline-offset-2">{t.advertising} →</Link></span>
+        </Notice>
+      )}
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <Kpi label={t.kpiRevenue} value={fmtMoney(pl.revenue, lang)} definition={t.kpiRevenueDef} icon={<ShoppingBag />} hint={`${fmtNum(os.delivered_count, lang)} ${t.orderStatuses.delivered}`} />
-        <Kpi label={t.kpiNet} value={fmtMoney(pl.net_profit, lang, { sign: true })} definition={t.kpiNetDef} icon={<TrendingUp />} tone={pl.net_profit < 0 ? "negative" : pl.net_profit > 0 ? "positive" : undefined}
+        <Kpi label={t.kpiRevenue} value={fmtMoney(pl.revenue, lang)} definition={t.kpiRevenueDef} icon={<ShoppingBag />} delta={vs(pl.revenue, prevPl?.revenue)} hint={`${fmtNum(os.delivered_count, lang)} ${t.orderStatuses.delivered}`} />
+        <Kpi label={t.kpiNet} value={fmtMoney(pl.net_profit, lang, { sign: true })} definition={t.kpiNetDef} icon={<TrendingUp />} delta={vs(pl.net_profit, prevPl?.net_profit)} tone={pl.net_profit < 0 ? "negative" : pl.net_profit > 0 ? "positive" : undefined}
           hint={`${t.kpiGross}: ${fmtMoney(pl.gross_profit, lang)}`} />
-        <Kpi label={t.kpiAdSpend} value={fmtMoney(s.ad_spend, lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} hint={pl.roas !== null ? `${t.kpiRoas} ${fmtNum(pl.roas, lang, 1)}×` : undefined} />
+        <Kpi label={t.kpiAdSpend} value={fmtMoney(s.ad_spend, lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} delta={vs(s.ad_spend, prevS?.ad_spend, true)} hint={pl.roas !== null ? `${t.kpiRoas} ${fmtNum(pl.roas, lang, 1)}×` : undefined} />
         <Kpi label={t.kpiCash} value={fmtMoney(s.cash_balance, lang)} definition={t.kpiCashDef} icon={<Wallet />} tone={s.cash_balance < 0 ? "negative" : undefined} />
-        <Kpi label={t.kpiExpenses} value={fmtMoney(s.expenses, lang)} definition={t.kpiExpensesDef} icon={<Receipt />} hint={`${fmtNum(s.expense_count, lang)} ${t.expenses.toLowerCase()}`} />
+        <Kpi label={t.kpiExpenses} value={fmtMoney(s.expenses, lang)} definition={t.kpiExpensesDef} icon={<Receipt />} delta={vs(s.expenses, prevS?.expenses, true)} hint={`${fmtNum(s.expense_count, lang)} ${t.expenses.toLowerCase()}`} />
         <Kpi label={t.kpiInvestments} value={fmtMoney(s.investments, lang)} definition={t.kpiInvestmentsDef} icon={<Landmark />} />
         <Kpi label={t.kpiPipeline} value={fmtMoney(os.pipeline_value, lang)} definition={t.kpiPipelineDef} icon={<Clock />} hint={`${fmtNum(os.pipeline_count, lang)} ${t.orders}`} />
         <Kpi label={t.kpiUncollected} value={fmtMoney(os.uncollected, lang)} definition={t.kpiUncollectedDef} icon={<Wallet />} hint={`${fmtNum(os.uncollected_count, lang)} ${t.orders}`} tone={os.uncollected > 0 ? "negative" : undefined} />

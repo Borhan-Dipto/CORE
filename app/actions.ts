@@ -578,3 +578,58 @@ export async function deleteBusiness(id: string, confirmName: string): Promise<F
   revalidatePath("/", "layout");
   redirect("/businesses?deleted=1");
 }
+
+// ---------- Website order sync ----------
+export async function createWebhookLink(businessId: string): Promise<{ url?: string; error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("rotate_integration_token", { p_business: businessId });
+  if (error) return { error: (await fail(error)).error };
+  refresh(businessId);
+  return { url: `${(await siteUrl()).replace(/\/$/, "")}/api/hooks/orders/${data}` };
+}
+
+export async function disableWebhook(businessId: string): Promise<FormState> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("disable_integration", { p_business: businessId });
+  if (error) return fail(error);
+  refresh(businessId);
+  return ok("saved");
+}
+
+// ---------- Global search ----------
+export type SearchHit = { kind: "order" | "entry"; id: string; title: string; sub: string; href: string; amount: number | null; business: string };
+export async function globalSearch(q: string, businessId?: string | null): Promise<SearchHit[]> {
+  const term = q.trim().replace(/[%_,()]/g, " ").slice(0, 60);
+  if (term.length < 2) return [];
+  const supabase = await createClient();
+  const like = `%${term}%`;
+  const digits = term.replace(/[০-৯]/g, (d) => String(d.charCodeAt(0) - 0x09e6));
+  let oq = supabase.from("orders").select("id, business_id, order_no, customer_name, customer_phone, status, order_date, businesses(name)")
+    .or(`order_no.ilike.${like},customer_name.ilike.${like},customer_phone.ilike.%${digits}%,tracking_no.ilike.${like},external_ref.ilike.${like}`)
+    .order("order_date", { ascending: false }).limit(8);
+  let tq = supabase.from("financial_transactions").select("id, business_id, txn_type, title, category_name, campaign_name, reference, amount, txn_date, businesses(name)")
+    .eq("status", "posted").or(`title.ilike.${like},reference.ilike.${like},campaign_name.ilike.${like},category_name.ilike.${like}`)
+    .order("txn_date", { ascending: false }).limit(6);
+  if (businessId) { oq = oq.eq("business_id", businessId); tq = tq.eq("business_id", businessId); }
+  const [{ data: orders }, { data: txns }] = await Promise.all([oq, tq]);
+  const bn = (b: unknown) => (Array.isArray(b) ? b[0]?.name : (b as { name?: string } | null)?.name) ?? "";
+  return [
+    ...(orders ?? []).map((o) => ({ kind: "order" as const, id: o.id, title: `${o.order_no}${o.customer_name ? ` · ${o.customer_name}` : ""}`,
+      sub: [o.customer_phone, o.status, o.order_date].filter(Boolean).join(" · "), href: `/b/${o.business_id}/orders/${o.id}`, amount: null, business: bn(o.businesses) })),
+    ...(txns ?? []).map((x) => ({ kind: "entry" as const, id: x.id, title: x.title || x.category_name || x.txn_type,
+      sub: [x.txn_type, x.campaign_name, x.reference, x.txn_date].filter(Boolean).join(" · "),
+      href: `/b/${x.business_id}/${x.txn_type === "expense" ? "expenses" : x.txn_type === "investment" || x.txn_type === "withdrawal" || x.txn_type === "profit_share" ? "capital" : "transactions"}`,
+      amount: Number(x.amount), business: bn(x.businesses) })),
+  ];
+}
+
+export async function bulkSetOrderStatus(businessId: string, ids: string[], status: string): Promise<{ done: number; failed: number }> {
+  const supabase = await createClient();
+  let done = 0, failed = 0;
+  for (const id of ids.slice(0, 200)) {
+    const { error } = await supabase.rpc("set_order_status", { p_order: id, p_status: status, p_note: null });
+    if (error) failed++; else done++;
+  }
+  refresh(businessId);
+  return { done, failed };
+}

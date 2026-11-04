@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   title: { default: "CORE", template: "%s · CORE" },
   description: "CORE — Business Operating System. One platform. Every business. Complete control.",
   robots: { index: false, follow: false },
-  icons: { icon: "/icon.svg" },
+  icons: { icon: "/icon.svg", apple: "/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "CORE", statusBarStyle: "default" },
 };
 export const viewport: Viewport = {
   width: "device-width", initialScale: 1,

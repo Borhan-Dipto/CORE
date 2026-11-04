@@ -10,7 +10,7 @@ import { Button, type ButtonProps } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/overlay";
 import { Field, Input } from "@/components/ui/form";
 import { Select } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn, consumeNewParam } from "@/lib/utils";
 import type { Dict } from "@/lib/i18n";
 
 export type Opts = {
@@ -22,12 +22,13 @@ type Action = (s: FormState, fd: FormData) => Promise<FormState>;
 const init: FormState = {};
 
 /** Dialog + form wired to a server action: inline error, toast + close on success. */
-function EntryDialog({ action, title, description, trigger, children, businessId, t, submit }: {
+function EntryDialog({ action, title, description, trigger, children, businessId, t, submit, openKey }: {
   action: Action; title: string; description?: string; trigger: React.ReactNode; children: (state: FormState) => React.ReactNode;
-  businessId: string; t: Dict; submit: string;
+  businessId: string; t: Dict; submit: string; openKey?: string;
 }) {
   const [open, setOpen] = React.useState(false);
   const [key, setKey] = React.useState(0);
+  React.useEffect(() => { if (consumeNewParam(openKey)) { setKey((k) => k + 1); setOpen(true); } }, [openKey]);
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) setKey((k) => k + 1); }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -74,13 +75,13 @@ function accountOptions(o: Opts, t: Dict) {
 }
 
 // ---------- Expense / boosting ----------
-export function ExpenseDialog({ t, businessId, opts, advertising, trigger, variant = "default" }: {
-  t: Dict; businessId: string; opts: Opts; advertising?: boolean; trigger?: React.ReactNode; variant?: ButtonProps["variant"];
+export function ExpenseDialog({ t, businessId, opts, advertising, trigger, variant = "default", openKey }: {
+  t: Dict; businessId: string; opts: Opts; advertising?: boolean; trigger?: React.ReactNode; variant?: ButtonProps["variant"]; openKey?: string;
 }) {
   const cats = opts.categories.filter((c) => c.is_active);
   const adCat = cats.find((c) => c.is_advertising);
   return (
-    <EntryDialog action={A.recordExpense} businessId={businessId} t={t}
+    <EntryDialog action={A.recordExpense} businessId={businessId} t={t} openKey={openKey}
       title={advertising ? t.addBoost : t.addExpense} submit={advertising ? t.addBoost : t.addExpense}
       trigger={trigger ?? <Button variant={variant}><Plus /> {advertising ? t.addBoost : t.addExpense}</Button>}>
       {() => <ExpenseFields t={t} opts={opts} cats={cats} defaultCat={advertising ? adCat?.id : undefined} />}
@@ -135,9 +136,9 @@ function ExpenseFields({ t, opts, cats, defaultCat }: { t: Dict; opts: Opts; cat
 }
 
 // ---------- Capital ----------
-export function InvestmentDialog({ t, businessId, opts, variant = "default" }: { t: Dict; businessId: string; opts: Opts; variant?: ButtonProps["variant"] }) {
+export function InvestmentDialog({ t, businessId, opts, variant = "default", openKey }: { t: Dict; businessId: string; opts: Opts; variant?: ButtonProps["variant"]; openKey?: string }) {
   return (
-    <EntryDialog action={A.recordInvestment} businessId={businessId} t={t} title={t.addInvestment} submit={t.addInvestment}
+    <EntryDialog action={A.recordInvestment} businessId={businessId} t={t} title={t.addInvestment} submit={t.addInvestment} openKey={openKey}
       trigger={<Button variant={variant}><Plus /> {t.addInvestment}</Button>}>
       {() => (
         <>
@@ -154,9 +155,9 @@ export function InvestmentDialog({ t, businessId, opts, variant = "default" }: {
   );
 }
 
-export function WithdrawalDialog({ t, businessId, opts }: { t: Dict; businessId: string; opts: Opts }) {
+export function WithdrawalDialog({ t, businessId, opts, openKey }: { t: Dict; businessId: string; opts: Opts; openKey?: string }) {
   return (
-    <EntryDialog action={A.recordWithdrawal} businessId={businessId} t={t} title={t.addWithdrawal} submit={t.addWithdrawal}
+    <EntryDialog action={A.recordWithdrawal} businessId={businessId} t={t} title={t.addWithdrawal} submit={t.addWithdrawal} openKey={openKey}
       trigger={<Button variant="outline">{t.addWithdrawal}</Button>}>
       {() => (
         <>

@@ -16,7 +16,7 @@ export default async function OrdersPage({ params, searchParams }: { params: Pro
   const p = await loadBizPage(id, await searchParams);
   const { t, lang, range } = p;
   const [orders, s, products, campaigns] = await Promise.all([getOrders(id, range), getOrderSummary(id, range.from, range.to), getProducts(id), getCampaignNames(id)]);
-  const newOrder = p.writable ? <OrderDialog t={t} lang={lang} businessId={id} products={products} campaigns={campaigns} /> : null;
+  const newOrder = p.writable ? <OrderDialog t={t} lang={lang} businessId={id} products={products} campaigns={campaigns} openKey="order" /> : null;
   const returnRate = s.delivered_count + s.returned_count ? Math.round((s.returned_count / (s.delivered_count + s.returned_count)) * 100) : 0;
   return (
     <Page wide title={t.orders}
@@ -29,7 +29,7 @@ export default async function OrdersPage({ params, searchParams }: { params: Pro
         <Kpi label={t.kpiUncollected} value={fmtMoney(s.uncollected, lang)} definition={t.kpiUncollectedDef} hint={`${fmtNum(s.uncollected_count, lang)} ${t.orders}`}
           tone={s.uncollected > 0 ? "negative" : undefined} />
       </div>
-      <OrdersTable rows={orders} t={t} lang={lang} businessId={id}
+      <OrdersTable rows={orders} t={t} lang={lang} businessId={id} canWrite={p.writable}
         empty={<div className="p-6"><EmptyState icon={ShoppingBag} title={t.noOrders} description={products.length ? undefined : t.noProducts} action={newOrder} /></div>} />
     </Page>
   );

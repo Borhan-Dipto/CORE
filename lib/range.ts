@@ -37,3 +37,24 @@ export function chartRange(r: DateRange) {
   const t = new Date(r.to + "T00:00:00Z"); t.setUTCDate(t.getUTCDate() - 365);
   return { ...r, from: iso(t) };
 }
+
+/** The period of equal length right before `r` (for "vs previous" comparisons). Null for "all time". */
+export function previousRange(r: DateRange): { from: string; to: string } | null {
+  if (r.key === "all") return null;
+  const day = 864e5;
+  const from = Date.parse(r.from + "T00:00:00Z"), to = Date.parse(r.to + "T00:00:00Z");
+  const len = Math.round((to - from) / day) + 1;
+  if (r.key === "month" || r.key === "prev_month") {
+    // calendar months compare with the same days of the month before
+    const f = new Date(from); const pf = new Date(Date.UTC(f.getUTCFullYear(), f.getUTCMonth() - 1, 1));
+    const pt = new Date(Math.min(Date.UTC(pf.getUTCFullYear(), pf.getUTCMonth(), new Date(to).getUTCDate()), Date.UTC(pf.getUTCFullYear(), pf.getUTCMonth() + 1, 0)));
+    return { from: iso(pf), to: iso(pt) };
+  }
+  return { from: iso(new Date(from - len * day)), to: iso(new Date(from - day)) };
+}
+
+/** % change, or null when there is no meaningful base. */
+export function pctChange(cur: number, prev: number): number | null {
+  if (!prev || !Number.isFinite(prev)) return null;
+  return ((cur - prev) / Math.abs(prev)) * 100;
+}

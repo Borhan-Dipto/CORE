@@ -49,7 +49,7 @@ export function DataTable<T>({ data, columns, t, toolbar, exportName, empty, pag
   return (
     <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-card">
       <div className="flex flex-wrap items-center gap-2 border-b border-border p-3 [&>*]:min-w-0">
-        <div className="relative min-w-0 flex-1 sm:max-w-64">
+        <div className="relative min-w-0 basis-full sm:basis-auto sm:flex-1 sm:max-w-64">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t.search} className="h-8 pl-8" aria-label={t.search} />
         </div>

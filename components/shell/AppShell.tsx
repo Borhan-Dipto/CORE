@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Check, ChevronsUpDown, Languages, LogOut, Menu as MenuIcon, Monitor, Moon, Plus, Sun, User, Building2 } from "lucide-react";
+import { Check, ChevronsUpDown, Languages, LogOut, Menu as MenuIcon, Monitor, Moon, Plus, Search, Sun, User, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Menu, MenuTrigger, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuCheckItem, SheetContent } from "@/components/ui/overlay";
@@ -11,6 +11,8 @@ import { Sidebar, NavList } from "@/components/shell/Sidebar";
 import { Logo } from "@/components/shell/Logo";
 import { navSections } from "@/components/shell/nav";
 import { NotificationBell } from "@/components/shell/NotificationBell";
+import { MobileNav } from "@/components/shell/MobileNav";
+import { SearchPalette } from "@/components/shell/SearchPalette";
 import { logout, setLang, setTheme } from "@/app/actions";
 import type { Dict, Lang } from "@/lib/i18n";
 import type { Theme } from "@/lib/session";
@@ -28,6 +30,7 @@ export function AppShell({ children, t, lang, theme, isOwner, user, businesses, 
   const sections = navSections(t, businessId, isOwner);
   const [collapsed, setCollapsed] = React.useState(initialCollapsed);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [searchOpen, setSearchOpen] = React.useState(false);
 
   const toggle = () => {
     setCollapsed((c) => {
@@ -54,14 +57,22 @@ export function AppShell({ children, t, lang, theme, isOwner, user, businesses, 
 
           <BusinessSwitcher t={t} businesses={businesses} current={current} isOwner={isOwner} />
 
+          <button type="button" onClick={() => setSearchOpen(true)}
+            className="ml-2 hidden h-8 w-56 items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 text-[13px] text-muted-foreground transition hover:bg-accent md:flex lg:w-72">
+            <Search className="size-3.5" /><span className="flex-1 truncate text-left">{t.searchTitle}…</span>
+            <kbd className="rounded border border-border bg-background px-1 text-[10px]">Ctrl K</kbd>
+          </button>
           <div className="ml-auto flex items-center gap-1">
+            <Button variant="ghost" size="icon-sm" className="md:hidden" aria-label={t.searchTitle} onClick={() => setSearchOpen(true)}><Search /></Button>
             <NotificationBell t={t} lang={lang} initialUnread={unread} />
             <LangToggle lang={lang} />
-            <ThemeMenu t={t} theme={theme} />
-            <UserMenu t={t} user={user} />
+            <div className="hidden sm:block"><ThemeMenu t={t} theme={theme} /></div>
+            <UserMenu t={t} user={user} theme={theme} />
           </div>
         </header>
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>
+        <MobileNav t={t} businessId={businessId} canAdd={isOwner && current?.status !== "archived"} onMore={() => setMobileOpen(true)} onSearch={() => setSearchOpen(true)} />
+        <SearchPalette t={t} lang={lang} sections={sections} businessId={businessId} businesses={businesses} open={searchOpen} onOpenChange={setSearchOpen} />
       </div>
     </div>
   );
@@ -129,8 +140,14 @@ function ThemeMenu({ t, theme }: { t: Dict; theme: Theme }) {
   );
 }
 
-function UserMenu({ t, user }: { t: Dict; user: { name: string; email: string } }) {
+function UserMenu({ t, user, theme }: { t: Dict; user: { name: string; email: string }; theme: Theme }) {
   const router = useRouter();
+  const [, start] = React.useTransition();
+  const apply = (v: Theme) => {
+    const dark = v === "dark" || (v === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", dark);
+    start(() => setTheme(v));
+  };
   return (
     <Menu>
       <MenuTrigger asChild>
@@ -145,6 +162,14 @@ function UserMenu({ t, user }: { t: Dict; user: { name: string; email: string } 
         </div>
         <MenuSeparator />
         <MenuItem onSelect={() => router.push("/account")}><User /> {t.account}</MenuItem>
+        <div className="sm:hidden">
+          <MenuSeparator />
+          <MenuLabel>{t.theme}</MenuLabel>
+          {([["light", t.light, Sun], ["dark", t.dark, Moon], ["system", t.system, Monitor]] as const).map(([v, label, I]) => (
+            <MenuCheckItem key={v} checked={theme === v} onSelect={() => apply(v)}><I className="size-4" /> {label}</MenuCheckItem>
+          ))}
+          <MenuSeparator />
+        </div>
         <MenuItem onSelect={() => logout()}><LogOut /> {t.logout}</MenuItem>
       </MenuContent>
     </Menu>

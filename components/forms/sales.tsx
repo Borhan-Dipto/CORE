@@ -12,7 +12,7 @@ import { ConfirmDialog, Dialog, DialogContent, DialogTrigger } from "@/component
 import { Field, Input, Textarea } from "@/components/ui/form";
 import { Select } from "@/components/ui/select";
 import { fmtMoney, type Dict, type Lang } from "@/lib/i18n";
-import { cn, parseAmount } from "@/lib/utils";
+import { cn, consumeNewParam, parseAmount } from "@/lib/utils";
 
 const init: FormState = {};
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Dhaka" }).format(new Date());
@@ -80,11 +80,12 @@ export function ProductEditButton(props: { t: Dict; lang: Lang; businessId: stri
 // ---------- New order ----------
 type Line = { key: number; product_id: string; product_name: string; qty: string; unit_price: string; unit_cost: string };
 
-export function OrderDialog({ t, lang, businessId, products, campaigns, variant = "default" }: {
-  t: Dict; lang: Lang; businessId: string; products: ProductOpt[]; campaigns: string[]; variant?: ButtonProps["variant"];
+export function OrderDialog({ t, lang, businessId, products, campaigns, variant = "default", openKey }: {
+  t: Dict; lang: Lang; businessId: string; products: ProductOpt[]; campaigns: string[]; variant?: ButtonProps["variant"]; openKey?: string;
 }) {
   const [open, setOpen] = React.useState(false);
   const [key, setKey] = React.useState(0);
+  React.useEffect(() => { if (consumeNewParam(openKey)) { setKey((k) => k + 1); setOpen(true); } }, [openKey]);
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) setKey((k) => k + 1); }}>
       <DialogTrigger asChild><Button variant={variant}><Plus /> {t.newOrder}</Button></DialogTrigger>
