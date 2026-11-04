@@ -1,5 +1,5 @@
 import { Page } from "@/components/shell/Page";
-import { ArchiveButton, BusinessEditForm } from "@/components/forms/core";
+import { ArchiveButton, BusinessEditForm, DeleteBusinessButton } from "@/components/forms/core";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBusiness, getContext, getT, requireOwner } from "@/lib/session";
 import { InvoiceSettingsForm } from "@/components/documents";
@@ -21,6 +21,10 @@ export default async function SettingsPage({ params }: { params: Promise<{ id: s
       <Card className={archived ? "" : "border-destructive/25"}>
         <CardHeader><CardTitle>{archived ? t.restoreBusiness : t.archiveBusiness}</CardTitle><CardDescription>{t.archiveHelp}</CardDescription></CardHeader>
         <CardContent><ArchiveButton t={t} id={id} archived={archived} /></CardContent>
+      </Card>
+      <Card className="border-destructive/40">
+        <CardHeader><CardTitle className="text-destructive">{t.deleteZone}</CardTitle><CardDescription>{t.deleteZoneHelp}</CardDescription></CardHeader>
+        <CardContent><DeleteBusinessButton t={t} id={id} name={business.name} /></CardContent>
       </Card>
     </Page>
   );

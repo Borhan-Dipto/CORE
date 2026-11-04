@@ -569,3 +569,11 @@ export async function sendTestEmail(): Promise<FormState> {
   }
   return { ok: (await getT()).t.mailSent + " " + user.email, at: Date.now() };
 }
+
+export async function deleteBusiness(id: string, confirmName: string): Promise<FormState> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_business", { p_business: id, p_confirm_name: confirmName });
+  if (error) return fail(error);
+  revalidatePath("/", "layout");
+  redirect("/businesses?deleted=1");
+}

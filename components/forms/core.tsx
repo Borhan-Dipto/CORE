@@ -4,7 +4,7 @@ import * as React from "react";
 import { useActionState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Archive, ArchiveRestore, Check, Copy, Link2, MessageCircle, Plus, RefreshCw, UserMinus, UserPlus, X } from "lucide-react";
+import { Archive, ArchiveRestore, Check, Copy, Link2, MessageCircle, Plus, RefreshCw, Trash2, UserMinus, UserPlus, X } from "lucide-react";
 import * as A from "@/app/actions";
 import type { FormState } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -194,6 +194,38 @@ export function ArchiveButton({ t, id, archived }: { t: Dict; id: string; archiv
     <ConfirmDialog title={t.confirmArchive} description={t.archiveHelp} confirmLabel={t.archiveBusiness} cancelLabel={t.cancel} destructive
       onConfirm={() => A.setBusinessStatus(id, "archived")}
       trigger={<Button variant="destructive-outline"><Archive /> {t.archiveBusiness}</Button>} />
+  );
+}
+
+export function DeleteBusinessButton({ t, id, name }: { t: Dict; id: string; name: string }) {
+  const [open, setOpen] = React.useState(false);
+  const [typed, setTyped] = React.useState("");
+  const [pending, start] = useTransition();
+  const [error, setError] = React.useState<string>();
+  const match = typed.trim() === name.trim();
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setTyped(""); setError(undefined); } }}>
+      <DialogTrigger asChild><Button variant="destructive"><Trash2 /> {t.deleteBusiness}</Button></DialogTrigger>
+      <DialogContent title={t.deleteBusinessTitle} description={t.deleteBusinessDesc}>
+        <form className="grid gap-4" onSubmit={(e) => {
+          e.preventDefault();
+          if (!match) return;
+          start(async () => {
+            const r = await A.deleteBusiness(id, typed);
+            if (r?.error) setError(r.error);
+          });
+        }}>
+          <ul className="grid gap-1 rounded-lg border border-destructive/25 bg-destructive-soft px-4 py-3 text-[13px] text-destructive">
+            {t.deleteBusinessList.map((x) => <li key={x}>• {x}</li>)}
+          </ul>
+          <Field label={t.deleteBusinessType.replace("{name}", name)} htmlFor="del-name">
+            <Input id="del-name" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" placeholder={name} />
+          </Field>
+          <ErrorText msg={error} />
+          <Button type="submit" variant="destructive" disabled={!match} loading={pending}><Trash2 /> {t.deleteBusinessConfirm}</Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
