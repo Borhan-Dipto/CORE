@@ -11,7 +11,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { loadBizPage } from "@/lib/bizpage";
 import { getSummary, getTransactions, getPendingInvites } from "@/lib/workspace";
-import { getPnl, getOrderSummary, getProducts } from "@/lib/sales";
+import { getPnl, getOrderSummary } from "@/lib/sales";
 import { chartRange } from "@/lib/range";
 import { fmtMoney, fmtNum } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -21,14 +21,13 @@ export default async function Dashboard({ params, searchParams }: { params: Prom
   const p = await loadBizPage(id, await searchParams);
   const { t, lang, range, business, members } = p;
   const cr = chartRange(range);
-  const [s, chart, recent, invites, pl, os, products] = await Promise.all([
+  const [s, chart, recent, invites, pl, os] = await Promise.all([
     getSummary(id, range.from, range.to),
     range.key === "all" ? getSummary(id, cr.from, cr.to) : Promise.resolve(null),
     getTransactions(id, range, { limit: 8 }),
     getPendingInvites(id),
     getPnl(id, range.from, range.to),
     getOrderSummary(id, range.from, range.to),
-    getProducts(id),
   ]);
   const daily = (chart ?? s).daily;
   const chartOs = range.key === "all" && os.delivered_count > 0 ? await getOrderSummary(id, cr.from, cr.to) : null;
@@ -36,7 +35,6 @@ export default async function Dashboard({ params, searchParams }: { params: Prom
   const steps = [
     { done: members.length > 1 || invites.length > 0, label: t.setupInvite, href: `/b/${id}/partners` },
     { done: hasSplit, label: t.setupSplit, href: `/b/${id}/partners` },
-    { done: products.length > 0, label: t.addProduct, href: `/b/${id}/products` },
     { done: s.expense_count > 0 || recent.length > 0, label: t.setupFirstExpense, href: `/b/${id}/expenses` },
   ];
   const showSetup = p.writable && steps.some((x) => !x.done);
@@ -48,7 +46,7 @@ export default async function Dashboard({ params, searchParams }: { params: Prom
       {showSetup && (
         <Card className="border-brand/25 bg-brand-soft/40">
           <CardHeader><CardTitle>{t.setupTitle}</CardTitle><CardDescription>{t.setupDesc}</CardDescription></CardHeader>
-          <CardContent className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <CardContent className="grid gap-2 sm:grid-cols-3">
             {steps.map((x) => (
               <Link key={x.label} href={x.href} className={cn("flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 text-sm transition hover:border-foreground/20", x.done && "text-muted-foreground")}>
                 {x.done ? <CheckCircle2 className="size-4 text-success" /> : <Circle className="size-4 text-muted-foreground" />}
