@@ -89,3 +89,27 @@ export function ComparisonChart({ data, lang, labels }: {
     </div>
   );
 }
+
+export function RevenueTrendChart({ data, lang, labels }: {
+  data: { day: string; revenue: number; gross_profit: number }[]; lang: Lang; labels: { revenue: string; profit: string };
+}) {
+  return (
+    <div className="h-64 w-full">
+      <ResponsiveContainer>
+        <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.22} /><stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} /></linearGradient>
+            <linearGradient id="gGp" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--chart-3)" stopOpacity={0.18} /><stop offset="100%" stopColor="var(--chart-3)" stopOpacity={0} /></linearGradient>
+          </defs>
+          <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
+          <XAxis dataKey="day" {...axis} interval="preserveStartEnd" minTickGap={36} tickFormatter={(d) => fmtShortDate(d, lang)} />
+          <YAxis {...axis} width={64} tickFormatter={(v) => fmtMoney(v, lang, { compact: true })} />
+          <Tooltip content={<ChartTooltip lang={lang} labelFmt={(d) => fmtShortDate(d, lang)} />} cursor={{ stroke: "var(--border)" }} />
+          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+          <Area type="monotone" dataKey="revenue" name={labels.revenue} stroke="var(--chart-1)" strokeWidth={2} fill="url(#gRev)" />
+          <Area type="monotone" dataKey="gross_profit" name={labels.profit} stroke="var(--chart-3)" strokeWidth={2} fill="url(#gGp)" />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Building2, Landmark, Megaphone, Receipt, Wallet } from "lucide-react";
+import { ArrowRight, Building2, Megaphone, Receipt, Wallet } from "lucide-react";
 import { Page, EmptyState } from "@/components/shell/Page";
 import { Kpi } from "@/components/data/Kpi";
 import { DateRange } from "@/components/data/DateRange";
@@ -11,14 +11,14 @@ import { getBusinesses, getContext, getT } from "@/lib/session";
 import { resolveRange } from "@/lib/range";
 import { fmtMoney, fmtNum } from "@/lib/i18n";
 
-type Row = { business_id: string; name: string; status: string; expenses: number; ad_spend: number; income: number; investments: number; cash_balance: number; partners: number };
+type Row = { business_id: string; name: string; status: string; expenses: number; ad_spend: number; income: number; investments: number; cash_balance: number; partners: number; revenue: number; net_profit: number };
 
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const sp = await searchParams;
   const range = resolveRange(sp);
   const [{ supabase, isOwner, name }, { lang, t }, businesses] = await Promise.all([getContext(), getT(), getBusinesses()]);
   const { data } = await supabase.rpc("global_summary", { p_from: range.from, p_to: range.to });
-  const rows = ((data ?? []) as Row[]).map((r) => ({ ...r, expenses: +r.expenses, ad_spend: +r.ad_spend, investments: +r.investments, cash_balance: +r.cash_balance, partners: +r.partners }));
+  const rows = ((data ?? []) as Row[]).map((r) => ({ ...r, expenses: +r.expenses, ad_spend: +r.ad_spend, investments: +r.investments, cash_balance: +r.cash_balance, partners: +r.partners, revenue: +r.revenue, net_profit: +r.net_profit }));
   const active = rows.filter((r) => r.status === "active");
   const sum = (k: keyof Row) => active.reduce((s, r) => s + Number(r[k]), 0);
   const first = name.split(/\s+/)[0];
@@ -32,8 +32,8 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <Kpi label={t.activeBusinesses} value={fmtNum(active.length, lang)} icon={<Building2 />} />
-            <Kpi label={t.totalSpend} value={fmtMoney(sum("expenses"), lang)} definition={t.kpiExpensesDef} icon={<Receipt />} />
+            <Kpi label={t.kpiRevenue} value={fmtMoney(sum("revenue"), lang)} definition={t.kpiRevenueDef} icon={<Building2 />} hint={`${fmtNum(active.length, lang)} ${t.activeBusinesses.toLowerCase()}`} />
+            <Kpi label={t.kpiNet} value={fmtMoney(sum("net_profit"), lang, { sign: true })} definition={t.kpiNetDef} icon={<Receipt />} tone={sum("net_profit") < 0 ? "negative" : sum("net_profit") > 0 ? "positive" : undefined} />
             <Kpi label={t.totalAdSpend} value={fmtMoney(sum("ad_spend"), lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} />
             <Kpi label={t.totalCash} value={fmtMoney(sum("cash_balance"), lang)} definition={t.kpiCashDef} icon={<Wallet />}
               tone={sum("cash_balance") < 0 ? "negative" : undefined} />
@@ -65,7 +65,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                     <ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
                   </div>
                   <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-border pt-4">
-                    {[[t.kpiExpenses, r.expenses], [t.kpiAdSpend, r.ad_spend], [t.kpiCash, r.cash_balance]].map(([l, v]) => (
+                    {[[t.kpiRevenue, r.revenue], [t.kpiNet, r.net_profit], [t.kpiCash, r.cash_balance]].map(([l, v]) => (
                       <div key={String(l)} className="min-w-0">
                         <dt className="truncate text-[11px] text-muted-foreground">{l}</dt>
                         <dd className={`tabular truncate text-sm font-semibold ${Number(v) < 0 ? "text-destructive" : ""}`}>{fmtMoney(Number(v), lang, { compact: true })}</dd>
@@ -76,7 +76,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
               </Link>
             ))}
           </div>
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Landmark className="size-3.5" /> {t.salesComing}</p>
+          
         </>
       )}
     </Page>

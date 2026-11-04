@@ -348,3 +348,103 @@ export async function toggleCategory(id: string, businessId: string, active: boo
   await supabase.from("expense_categories").update({ is_active: active }).eq("id", id);
   refresh(businessId);
 }
+
+// ---------- Sales ----------
+export async function addProduct(_: FormState, fd: FormData): Promise<FormState> {
+  const name = str(fd, "name");
+  if (!name) return { error: await msg("err_name_required"), at: Date.now() };
+  const supabase = await createClient();
+  const { error } = await supabase.from("products").insert({
+    business_id: str(fd, "business_id"), name, sku: opt(fd, "sku"), category: opt(fd, "category"),
+    cost_price: amount(fd, "cost_price"), sell_price: amount(fd, "sell_price"),
+  });
+  if (error) return fail(error, "name");
+  refresh(str(fd, "business_id"));
+  return ok("productAdded");
+}
+
+export async function updateProduct(_: FormState, fd: FormData): Promise<FormState> {
+  const name = str(fd, "name");
+  if (!name) return { error: await msg("err_name_required"), at: Date.now() };
+  const supabase = await createClient();
+  const { error } = await supabase.from("products").update({
+    name, sku: opt(fd, "sku"), category: opt(fd, "category"), cost_price: amount(fd, "cost_price"), sell_price: amount(fd, "sell_price"),
+  }).eq("id", str(fd, "id"));
+  if (error) return fail(error, "name");
+  refresh(str(fd, "business_id"));
+  return ok("saved");
+}
+
+export async function toggleProduct(id: string, businessId: string, active: boolean) {
+  const supabase = await createClient();
+  await supabase.from("products").update({ is_active: active }).eq("id", id);
+  refresh(businessId);
+}
+
+const ORDER_MONEY = ["discount", "delivery_charge", "courier_cost", "packaging_cost", "cod_fee", "other_cost"];
+
+export async function createOrder(_: FormState, fd: FormData): Promise<FormState> {
+  const businessId = str(fd, "business_id");
+  let items: unknown;
+  try { items = JSON.parse(str(fd, "items") || "[]"); } catch { items = []; }
+  const order: Record<string, unknown> = {
+    order_date: str(fd, "order_date"), status: str(fd, "status") || "pending", source: str(fd, "source") || "website",
+    customer_name: str(fd, "customer_name"), customer_phone: str(fd, "customer_phone"), customer_address: str(fd, "customer_address"),
+    notes: str(fd, "notes"), campaign_name: str(fd, "campaign_name"), courier: str(fd, "courier"), tracking_no: str(fd, "tracking_no"),
+  };
+  ORDER_MONEY.forEach((k) => (order[k] = amount(fd, k)));
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("create_order", { p_business: businessId, p_order: order, p_items: items });
+  if (error) return fail(error);
+  refresh(businessId);
+  return { ok: await msg("orderCreated"), link: `/b/${businessId}/orders/${data}`, at: Date.now() };
+}
+
+export async function setOrderStatus(orderId: string, businessId: string, status: string, note?: string): Promise<FormState> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_order_status", { p_order: orderId, p_status: status, p_note: note ?? null });
+  if (error) return fail(error);
+  refresh(businessId);
+  return ok("statusUpdated");
+}
+
+export async function updateOrderInfo(_: FormState, fd: FormData): Promise<FormState> {
+  const businessId = str(fd, "business_id");
+  const p: Record<string, unknown> = {};
+  ["customer_name", "customer_phone", "customer_address", "notes", "courier", "tracking_no", "campaign_name"].forEach((k) => { if (fd.has(k)) p[k] = str(fd, k); });
+  ORDER_MONEY.forEach((k) => { if (fd.has(k)) p[k] = amount(fd, k); });
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_order_info", { p_order: str(fd, "order_id"), p });
+  if (error) return fail(error);
+  refresh(businessId);
+  return ok("orderUpdated");
+}
+
+export async function collectOrder(_: FormState, fd: FormData): Promise<FormState> {
+  const businessId = str(fd, "business_id");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("collect_order", {
+    p_order: str(fd, "order_id"), p_account: str(fd, "account_id"), p_amount: amount(fd), p_date: str(fd, "date") || null,
+  });
+  if (error) return fail(error);
+  refresh(businessId);
+  return ok("collectedOk");
+}
+
+export type ImportRow = { order: Record<string, unknown>; items: Record<string, unknown>[]; line: number };
+export type ImportResult = { created: number; skipped: number; failed: { line: number; error: string }[] };
+
+/** Import parsed CSV rows. Duplicate website order IDs (external_ref) are skipped, not double-counted. */
+export async function importOrders(businessId: string, rows: ImportRow[]): Promise<ImportResult> {
+  const { t } = await getT();
+  const supabase = await createClient();
+  const res: ImportResult = { created: 0, skipped: 0, failed: [] };
+  for (const r of rows.slice(0, 1000)) {
+    const { error } = await supabase.rpc("create_order", { p_business: businessId, p_order: r.order, p_items: r.items });
+    if (!error) res.created++;
+    else if (error.code === "23505") res.skipped++;
+    else res.failed.push({ line: r.line, error: t[errorKey(error)] });
+  }
+  refresh(businessId);
+  return res;
+}

@@ -14,9 +14,9 @@ import type { Dict } from "@/lib/i18n";
 
 export type ColMeta = { align?: "right"; className?: string; label?: string; csv?: (row: unknown) => string | number };
 
-export function DataTable<T>({ data, columns, t, toolbar, exportName, empty, pageSize = 20, initialSort, dense }: {
+export function DataTable<T>({ data, columns, t, toolbar, exportName, empty, pageSize = 20, initialSort, dense, rowId }: {
   data: T[]; columns: ColumnDef<T, unknown>[]; t: Dict; toolbar?: React.ReactNode; exportName?: string;
-  empty?: React.ReactNode; pageSize?: number; initialSort?: SortingState; dense?: boolean;
+  empty?: React.ReactNode; pageSize?: number; initialSort?: SortingState; dense?: boolean; rowId?: (row: T) => string;
 }) {
   const [sorting, setSorting] = React.useState<SortingState>(initialSort ?? []);
   const [filter, setFilter] = React.useState("");
@@ -48,7 +48,7 @@ export function DataTable<T>({ data, columns, t, toolbar, exportName, empty, pag
   const pages = table.getPageCount();
   return (
     <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-card">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border p-3 [&>*]:min-w-0">
         <div className="relative min-w-0 flex-1 sm:max-w-64">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t.search} className="h-8 pl-8" aria-label={t.search} />
@@ -94,7 +94,7 @@ export function DataTable<T>({ data, columns, t, toolbar, exportName, empty, pag
           </thead>
           <tbody>
             {rows.length ? rows.map((r) => (
-              <tr key={r.id} className="border-b border-border last:border-0 transition-colors hover:bg-muted/40">
+              <tr key={r.id} data-id={rowId?.(r.original)} className={cn("border-b border-border last:border-0 transition-colors hover:bg-muted/40", rowId && "cursor-pointer")}>
                 {r.getVisibleCells().map((c) => {
                   const m = c.column.columnDef.meta as ColMeta | undefined;
                   return <td key={c.id} className={cn("px-4 align-middle", dense ? "py-2" : "py-3", m?.align === "right" && "tabular text-right", m?.className)}>{flexRender(c.column.columnDef.cell, c.getContext())}</td>;

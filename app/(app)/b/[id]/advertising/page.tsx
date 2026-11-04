@@ -7,6 +7,9 @@ import { SpendTrendChart, RankBars } from "@/components/charts/Charts";
 import { ExpenseDialog } from "@/components/forms/finance";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadBizPage } from "@/lib/bizpage";
+import { getOrderSummary } from "@/lib/sales";
+import { getCampaignPerformance } from "@/lib/campaignPerf";
+import { CampaignTable } from "@/components/data/CampaignTable";
 import { getSummary, getTransactions } from "@/lib/workspace";
 import { chartRange } from "@/lib/range";
 import { fmtMoney, fmtNum } from "@/lib/i18n";
@@ -22,6 +25,8 @@ export default async function AdvertisingPage({ params, searchParams }: { params
     getSummary(id, range.from, range.to), getTransactions(id, range, { types: ["expense"], adsOnly: true }),
     range.key === "all" ? getSummary(id, cr.from, cr.to) : Promise.resolve(null),
   ]);
+  const os = await getOrderSummary(id, range.from, range.to);
+  const perf = await getCampaignPerformance(id, range.from, range.to, os);
   const days = Math.max(1, (chart ?? s).daily.length);
   const campaigns = new Set(rows.filter((r) => r.status === "posted" && r.campaign_name).map((r) => r.campaign_name)).size;
   return (
@@ -31,7 +36,7 @@ export default async function AdvertisingPage({ params, searchParams }: { params
         <Kpi label={t.kpiAdSpend} value={fmtMoney(s.ad_spend, lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} />
         <Kpi label={`${t.kpiAdSpend} / ${t.today.toLowerCase()}`} value={fmtMoney(Math.round(s.ad_spend / days), lang)} hint={`${fmtNum(days, lang)} ${t.date.toLowerCase()}`} />
         <Kpi label={t.campaigns} value={fmtNum(campaigns, lang)} />
-        <Kpi label={`% ${t.of} ${t.kpiExpenses.toLowerCase()}`} value={s.expenses ? `${fmtNum(Math.round((s.ad_spend / s.expenses) * 100), lang)}%` : "—"} />
+        <Kpi label={t.kpiRoas} value={s.ad_spend > 0 && os.revenue > 0 ? `${fmtNum(os.revenue / s.ad_spend, lang, 1)}×` : "—"} definition={t.kpiRoasDef} hint={`${t.kpiRevenue}: ${fmtMoney(os.revenue, lang)}`} />
       </div>
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
@@ -49,6 +54,7 @@ export default async function AdvertisingPage({ params, searchParams }: { params
           </CardContent></Card>
         </div>
       </div>
+      <CampaignTable rows={perf} t={t} lang={lang} />
       <LedgerTable rows={rows} t={t} lang={lang} variant="ads" businessId={id} canWrite={p.writable} exportName={`advertising-${range.from}-${range.to}`}
         accounts={p.accountNames} partners={p.partnerNames} emptyText={t.noAds}
         emptyAction={p.writable ? <ExpenseDialog t={t} businessId={id} opts={p.opts} advertising variant="outline" /> : undefined} />

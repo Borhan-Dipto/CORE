@@ -1,4 +1,4 @@
-import { LayoutDashboard, Building2, Receipt, Megaphone, Landmark, Wallet, ListOrdered, Users, History, Settings } from "lucide-react";
+import { LayoutDashboard, Building2, Receipt, Megaphone, Landmark, Wallet, ListOrdered, Users, History, Settings, ShoppingBag, Package, TrendingUp } from "lucide-react";
 import type { Dict } from "@/lib/i18n";
 
 export type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
@@ -16,9 +16,17 @@ export function navSections(t: Dict, businessId: string | null, isOwner: boolean
   return [
     global,
     {
-      label: t.finance,
+      label: t.sales,
       items: [
         { href: b, label: t.dashboard, icon: LayoutDashboard, exact: true },
+        { href: `${b}/orders`, label: t.orders, icon: ShoppingBag },
+        { href: `${b}/products`, label: t.products, icon: Package },
+        { href: `${b}/pnl`, label: t.pnl, icon: TrendingUp },
+      ],
+    },
+    {
+      label: t.finance,
+      items: [
         { href: `${b}/expenses`, label: t.expenses, icon: Receipt },
         { href: `${b}/advertising`, label: t.advertising, icon: Megaphone },
         { href: `${b}/capital`, label: t.capital, icon: Landmark },
