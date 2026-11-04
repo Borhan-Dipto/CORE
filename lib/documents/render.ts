@@ -379,23 +379,196 @@ ${x.rows.length && x.distributable > 0 ? `<table class="items"><thead><tr><th>${
 <div class="foot">${sigs([{ label: t.preparedBy, who: x.created_by_name }, ...x.rows.slice(0, 2).map((r) => ({ label: t.partnerSig, who: r.name })), { label: t.authSig, who: d.brand.signatory }].slice(0, 4))}${fine(t, lang)}</div>`;
 }
 
+// ---------- Monthly business report ----------
+const RL = {
+  en: {
+    title: "Business Report", period: "Period", compared: "Compared with", generated: "Generated",
+    kRevenue: "Revenue", kNet: "Net profit", kOrders: "Orders delivered", kAds: "Ad spend", kRoas: "ROAS", kMargin: "Net margin",
+    kCash: "Cash & bank", kDue: "COD to collect", vsPrev: "vs previous", noPrev: "no earlier data",
+    pnlTitle: "Profit & loss", thisPeriod: "This period", prevPeriod: "Previous", change: "Change",
+    revenue: "Revenue (delivered orders)", cogs: "Cost of goods sold", direct: "Delivery, packaging & COD", gross: "Gross profit",
+    opex: "Operating expenses", ofWhichAds: "of which advertising", other: "Other income", net: "Net profit",
+    trendTitle: "Daily revenue", trendNote: "Delivered order value per day",
+    productsTitle: "Products", product: "Product", units: "Units", rev: "Revenue", cost: "Cost", profit: "Profit", margin: "Margin",
+    campaignsTitle: "Advertising performance", campaign: "Campaign", spend: "Spend", orders: "Orders", roas: "ROAS", noCampaign: "Not linked to a campaign",
+    expensesTitle: "Expenses by category", category: "Category", amount: "Amount", share: "Share",
+    ordersTitle: "Orders", placed: "Placed", delivered: "Delivered", returned: "Returned", cancelled: "Cancelled", returnRate: "Return rate",
+    pipeline: "In progress", uncollected: "Delivered, cash not collected", source: "Source",
+    cashTitle: "Cash & capital", account: "Account", balance: "Balance", partner: "Partner", split: "Split", capital: "Capital",
+    profitShare: "Share of net profit", invest: "Investments in period", withdraw: "Withdrawals in period", inventory: "Stock purchases (cash, not expense)",
+    settledNote: "This period is closed — settlement", previewNote: "Profit shares are a preview until the period is closed in Profit distribution.",
+    empty: "No data for this period.", sources: { website: "Website", facebook: "Facebook", instagram: "Instagram", whatsapp: "WhatsApp", phone: "Phone", other: "Other" } as Record<string, string>,
+    page: "CORE · Business report",
+  },
+  bn: {
+    title: "ব্যবসায়িক রিপোর্ট", period: "সময়কাল", compared: "তুলনা", generated: "তৈরি",
+    kRevenue: "বিক্রি", kNet: "নিট লাভ", kOrders: "ডেলিভারড অর্ডার", kAds: "বুস্টিং খরচ", kRoas: "ROAS", kMargin: "নিট মার্জিন",
+    kCash: "ক্যাশ ও ব্যাংক", kDue: "COD আদায় বাকি", vsPrev: "আগের তুলনায়", noPrev: "আগের তথ্য নেই",
+    pnlTitle: "লাভ-ক্ষতি", thisPeriod: "এই সময়", prevPeriod: "আগের সময়", change: "পরিবর্তন",
+    revenue: "বিক্রি (ডেলিভারড অর্ডার)", cogs: "পণ্যের খরচ", direct: "ডেলিভারি, প্যাকেজিং ও COD", gross: "মোট লাভ",
+    opex: "পরিচালন খরচ", ofWhichAds: "এর মধ্যে বুস্টিং", other: "অন্যান্য আয়", net: "নিট লাভ",
+    trendTitle: "দৈনিক বিক্রি", trendNote: "প্রতিদিন ডেলিভারড অর্ডারের মূল্য",
+    productsTitle: "পণ্যভিত্তিক", product: "পণ্য", units: "পরিমাণ", rev: "বিক্রি", cost: "খরচ", profit: "লাভ", margin: "মার্জিন",
+    campaignsTitle: "বিজ্ঞাপনের ফলাফল", campaign: "ক্যাম্পেইন", spend: "খরচ", orders: "অর্ডার", roas: "ROAS", noCampaign: "ক্যাম্পেইন উল্লেখ নেই",
+    expensesTitle: "খাতভিত্তিক খরচ", category: "খাত", amount: "পরিমাণ", share: "অংশ",
+    ordersTitle: "অর্ডার", placed: "নতুন অর্ডার", delivered: "ডেলিভারড", returned: "রিটার্ন", cancelled: "বাতিল", returnRate: "রিটার্নের হার",
+    pipeline: "প্রক্রিয়াধীন", uncollected: "ডেলিভারড, টাকা আসেনি", source: "উৎস",
+    cashTitle: "ক্যাশ ও মূলধন", account: "অ্যাকাউন্ট", balance: "ব্যালেন্স", partner: "পার্টনার", split: "ভাগ", capital: "মূলধন",
+    profitShare: "নিট লাভে অংশ", invest: "এই সময়ে বিনিয়োগ", withdraw: "এই সময়ে উত্তোলন", inventory: "স্টক কেনা (ক্যাশ, খরচ নয়)",
+    settledNote: "এই সময়কাল ক্লোজ হয়েছে — সেটেলমেন্ট", previewNote: "লাভ বণ্টন পেজে সময়কাল ক্লোজ না করা পর্যন্ত লাভের অংশ শুধু আনুমানিক।",
+    empty: "এই সময়ে কোনো তথ্য নেই।", sources: { website: "ওয়েবসাইট", facebook: "Facebook", instagram: "Instagram", whatsapp: "WhatsApp", phone: "ফোন", other: "অন্যান্য" } as Record<string, string>,
+    page: "CORE · ব্যবসায়িক রিপোর্ট",
+  },
+};
+
+const REPORT_CSS = `
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.kpi{border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;break-inside:avoid}
+.kpi .v{font-size:13.5pt;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .d{font-size:7.5pt;margin-top:2px;color:#6b7280}
+.up{color:#15803d}.down{color:#b91c1c}
+h2.sec{font-size:11pt;font-weight:700;margin:22px 0 8px;display:flex;align-items:baseline;justify-content:space-between;gap:12px;break-after:avoid}
+h2.sec small{font-size:8pt;font-weight:400;color:#6b7280}
+table.rt{width:100%;border-collapse:collapse;font-size:9pt}
+table.rt th{font-size:7.5pt;font-weight:600;color:#6b7280;text-align:left;padding:6px 8px;border-bottom:1px solid #e5e7eb;background:#f9fafb}
+table.rt th.r{text-align:right}
+table.rt td{padding:6px 8px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+table.rt tr{break-inside:avoid}
+table.rt tr.tot td{font-weight:700;border-top:1.5px solid #0a0a0a;border-bottom:0}
+table.rt tr.sub td{font-weight:600;background:#fafafa}
+table.rt td.ind{padding-left:20px;color:#6b7280}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.meter{height:5px;border-radius:3px;background:#eef0f3;overflow:hidden;margin-top:4px;position:relative}.meter i{display:block;height:100%;background:#2563eb;border-radius:3px}
+.chart{border:1px solid #e5e7eb;border-radius:10px;padding:10px 10px 4px;break-inside:avoid}
+.note{font-size:8pt;color:#6b7280;margin-top:6px}
+`;
+
+function pctChange(cur: number, prev: number) {
+  if (!prev) return null;
+  return ((cur - prev) / Math.abs(prev)) * 100;
+}
+
+function reportBody(d: Extract<DocData, { kind: "report" }>, lang: DocLang, t: Lx) {
+  const r = d.r, R = RL[lang];
+  const P = (k: string) => r.pnl[k] ?? 0, Q = (k: string) => r.prev[k] ?? 0;
+  const m = (v: number) => `${v < 0 ? "−" : ""}${money(v, lang)}`;
+  const pc = (v: number) => `${new Intl.NumberFormat(lang === "bn" ? "bn-BD" : "en-IN", { maximumFractionDigits: 1 }).format(v)}%`;
+  const delta = (cur: number, prev: number, invert = false) => {
+    const c = pctChange(cur, prev);
+    if (c === null) return `<div class="d">${esc(R.noPrev)}</div>`;
+    const good = invert ? c <= 0 : c >= 0;
+    return `<div class="d"><span class="${good ? "up" : "down"}">${c >= 0 ? "▲" : "▼"} ${pc(Math.abs(c))}</span> ${esc(R.vsPrev)}</div>`;
+  };
+  const cash = r.accounts.reduce((a, x) => a + x.balance, 0);
+  const roas = P("ad_spend") > 0 ? P("revenue") / P("ad_spend") : null;
+  const prevRoas = Q("ad_spend") > 0 ? Q("revenue") / Q("ad_spend") : null;
+  const margin = P("revenue") > 0 ? (P("net_profit") / P("revenue")) * 100 : null;
+  const kpi = (label: string, value: string, extra = "") => `<div class="kpi"><div class="lbl ${lang}">${esc(label)}</div><div class="v">${value}</div>${extra}</div>`;
+  const x = (v: number) => `${new Intl.NumberFormat(lang === "bn" ? "bn-BD" : "en-IN", { maximumFractionDigits: 2 }).format(v)}×`;
+
+  const kpis = [
+    kpi(R.kRevenue, money(P("revenue"), lang), delta(P("revenue"), Q("revenue"))),
+    kpi(R.kNet, `<span class="${P("net_profit") < 0 ? "down" : ""}">${m(P("net_profit"))}</span>`, delta(P("net_profit"), Q("net_profit"))),
+    kpi(R.kOrders, num(r.orders.delivered, lang), delta(r.orders.delivered, r.prevOrders.delivered)),
+    kpi(R.kAds, money(P("ad_spend"), lang), delta(P("ad_spend"), Q("ad_spend"), true)),
+    kpi(R.kRoas, roas === null ? "—" : x(roas), roas !== null && prevRoas !== null ? delta(roas, prevRoas) : ""),
+    kpi(R.kMargin, margin === null ? "—" : pc(margin)),
+    kpi(R.kCash, m(cash)),
+    kpi(R.kDue, money(r.orders.uncollected, lang), `<div class="d">${num(r.orders.uncollected_count, lang)} ${esc(R.orders)}</div>`),
+  ].join("");
+
+  const line = (label: string, k: string, cls = "", neg = false) => {
+    const cur = neg ? -P(k) : P(k), prev = neg ? -Q(k) : Q(k);
+    const c = pctChange(P(k), Q(k));
+    return `<tr class="${cls}"><td class="${cls === "ind" ? "ind" : ""}">${esc(label)}</td><td class="r">${m(cur)}</td><td class="r muted">${m(prev)}</td>
+      <td class="r ${c === null ? "muted" : ""}">${c === null ? "—" : `${c >= 0 ? "+" : "−"}${pc(Math.abs(c))}`}</td></tr>`;
+  };
+  const pnl = `<table class="rt"><thead><tr><th></th><th class="r">${esc(R.thisPeriod)}</th><th class="r">${esc(R.prevPeriod)}</th><th class="r">${esc(R.change)}</th></tr></thead><tbody>
+    ${line(R.revenue, "revenue")}${line(R.cogs, "cogs", "", true)}${line(R.direct, "direct_costs", "", true)}
+    ${line(R.gross, "gross_profit", "sub")}${line(R.opex, "operating_expenses", "", true)}${line(R.ofWhichAds, "ad_spend", "ind", true)}
+    ${P("other_income") || Q("other_income") ? line(R.other, "other_income") : ""}${line(R.net, "net_profit", "tot")}</tbody></table>`;
+
+  // daily revenue chart (inline SVG, prints crisply)
+  const days = r.daily;
+  const maxV = Math.max(1, ...days.map((x) => x.revenue));
+  const W = 700, H = 120, bw = days.length ? W / days.length : W;
+  const bars = days.map((x, i) => {
+    const h = Math.max(x.revenue > 0 ? 2 : 0, (x.revenue / maxV) * (H - 16));
+    return `<rect x="${(i * bw + bw * 0.15).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" fill="#2563eb"/>`;
+  }).join("");
+  const step = Math.max(1, Math.ceil(days.length / 8));
+  const labels = days.map((x, i) => i % step === 0 ? `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H + 12}" text-anchor="middle" font-size="9" fill="#6b7280">${esc(new Intl.DateTimeFormat(lang === "bn" ? "bn-BD" : "en-GB", { day: "numeric", month: "short", timeZone: "Asia/Dhaka" }).format(new Date(x.day + "T00:00:00+06:00")))}</text>` : "").join("");
+  const chart = days.length > 1 ? `<h2 class="sec">${esc(R.trendTitle)} <small>${esc(R.trendNote)} · max ${money(maxV, lang)}</small></h2>
+    <div class="chart"><svg viewBox="0 0 ${W} ${H + 16}" width="100%" role="img" aria-label="${esc(R.trendTitle)}"><line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="#e5e7eb"/>${bars}${labels}</svg></div>` : "";
+
+  const products = r.products.length ? `<h2 class="sec">${esc(R.productsTitle)}</h2><table class="rt"><thead><tr><th>${esc(R.product)}</th><th class="r">${esc(R.units)}</th><th class="r">${esc(R.rev)}</th><th class="r">${esc(R.cost)}</th><th class="r">${esc(R.profit)}</th><th class="r">${esc(R.margin)}</th></tr></thead><tbody>
+    ${r.products.map((p) => `<tr><td>${esc(p.product)}</td><td class="r">${num(p.units, lang)}</td><td class="r">${money(p.revenue, lang)}</td><td class="r muted">${money(p.cost, lang)}</td><td class="r"><strong>${m(p.profit)}</strong></td><td class="r">${p.revenue ? pc((p.profit / p.revenue) * 100) : "—"}</td></tr>`).join("")}</tbody></table>` : "";
+
+  const campaigns = r.campaigns.length ? `<h2 class="sec">${esc(R.campaignsTitle)}</h2><table class="rt"><thead><tr><th>${esc(R.campaign)}</th><th class="r">${esc(R.spend)}</th><th class="r">${esc(R.orders)}</th><th class="r">${esc(R.rev)}</th><th class="r">${esc(R.roas)}</th></tr></thead><tbody>
+    ${r.campaigns.map((c) => `<tr><td>${esc(c.campaign === "—" ? R.noCampaign : c.campaign)}</td><td class="r">${money(c.spend, lang)}</td><td class="r">${num(c.orders, lang)}</td><td class="r">${money(c.revenue, lang)}</td><td class="r"><strong class="${c.roas !== null && c.roas < 1 && c.campaign !== "—" ? "down" : ""}">${c.roas === null || c.campaign === "—" ? "—" : x(c.roas)}</strong></td></tr>`).join("")}</tbody></table>` : "";
+
+  const totExp = r.categories.reduce((a, c) => a + c.total, 0);
+  const expenses = r.categories.length ? `<div><h2 class="sec">${esc(R.expensesTitle)}</h2><table class="rt"><thead><tr><th>${esc(R.category)}</th><th class="r">${esc(R.amount)}</th></tr></thead><tbody>
+    ${r.categories.map((c) => `<tr><td>${esc(c.name)}<div class="meter"><i style="width:${totExp ? ((c.total / totExp) * 100).toFixed(1) : 0}%"></i></div></td><td class="r">${money(c.total, lang)}<div class="sub">${totExp ? pc((c.total / totExp) * 100) : ""}</div></td></tr>`).join("")}
+    <tr class="tot"><td>${esc(t.total)}</td><td class="r">${money(totExp, lang)}</td></tr></tbody></table></div>` : "";
+
+  const o = r.orders;
+  const closedBase = o.delivered + o.returned;
+  const orders = `<div><h2 class="sec">${esc(R.ordersTitle)}</h2><table class="rt"><tbody>
+    <tr><td>${esc(R.placed)}</td><td class="r">${num(o.placed, lang)}</td></tr>
+    <tr><td>${esc(R.delivered)}</td><td class="r">${num(o.delivered, lang)} · ${num(o.units, lang)} ${esc(R.units)}</td></tr>
+    <tr><td>${esc(R.returned)}</td><td class="r">${num(o.returned, lang)}</td></tr>
+    <tr><td>${esc(R.cancelled)}</td><td class="r">${num(o.cancelled, lang)}</td></tr>
+    <tr><td>${esc(R.returnRate)}</td><td class="r">${closedBase ? pc((o.returned / closedBase) * 100) : "—"}</td></tr>
+    <tr><td>${esc(R.pipeline)}</td><td class="r">${num(o.pipeline_count, lang)} · ${money(o.pipeline, lang)}</td></tr>
+    <tr><td>${esc(R.uncollected)}</td><td class="r">${num(o.uncollected_count, lang)} · ${money(o.uncollected, lang)}</td></tr>
+    ${r.sources.map((sx) => `<tr><td class="ind">${esc(R.source)}: ${esc(R.sources[sx.source] ?? sx.source)}</td><td class="r">${num(sx.orders, lang)}</td></tr>`).join("")}
+  </tbody></table></div>`;
+
+  const accounts = `<div><h2 class="sec">${esc(R.cashTitle)}</h2><table class="rt"><thead><tr><th>${esc(R.account)}</th><th class="r">${esc(R.balance)}</th></tr></thead><tbody>
+    ${r.accounts.map((a) => `<tr><td>${esc(a.name)}</td><td class="r">${m(a.balance)}</td></tr>`).join("")}
+    <tr class="tot"><td>${esc(t.total)}</td><td class="r">${m(cash)}</td></tr></tbody></table>
+    <table class="rt" style="margin-top:8px"><tbody>
+      <tr><td class="muted">${esc(R.invest)}</td><td class="r">${money(r.investments, lang)}</td></tr>
+      <tr><td class="muted">${esc(R.withdraw)}</td><td class="r">${money(r.withdrawals, lang)}</td></tr>
+      ${r.inventory ? `<tr><td class="muted">${esc(R.inventory)}</td><td class="r">${money(r.inventory, lang)}</td></tr>` : ""}
+    </tbody></table></div>`;
+  const partners = r.partners.length ? `<div><h2 class="sec">${esc(R.partner)}</h2><table class="rt"><thead><tr><th>${esc(R.partner)}</th><th class="r">${esc(R.split)}</th><th class="r">${esc(R.profitShare)}</th><th class="r">${esc(R.capital)}</th></tr></thead><tbody>
+    ${r.partners.map((p) => `<tr><td>${esc(p.name)}</td><td class="r">${p.percentage === null ? "—" : pc(p.percentage)}</td><td class="r">${money(p.share, lang)}</td><td class="r">${m(p.capital)}</td></tr>`).join("")}</tbody></table>
+    <p class="note">${r.settlement ? `${esc(R.settledNote)} #${num(r.settlement.no, lang)} (${money(r.settlement.distributable, lang)}).` : esc(R.previewNote)}</p></div>` : "";
+
+  const meta: [string, string][] = [[R.period, esc(`${date(r.from, lang)} – ${date(r.to, lang)}`)], [R.compared, esc(`${date(r.prevFrom, lang)} – ${date(r.prevTo, lang)}`)],
+    [R.generated, esc(date(new Date().toISOString(), lang))]];
+  return `<style>${REPORT_CSS}</style>${header(d.brand, R.title, meta, lang)}
+<div class="kpis">${kpis}</div>
+<h2 class="sec">${esc(R.pnlTitle)}</h2>${pnl}
+${chart}
+${products}
+${campaigns}
+<div class="two">${expenses}${orders}</div>
+<div class="two">${accounts}${partners}</div>
+${fine(t, lang)}`;
+}
+
 export function documentTitle(d: DocData, lang: DocLang) {
   const t = L[lang];
   if (d.kind === "invoice") return `${invoiceNo(d.order.order_no)}`;
   if (d.kind === "voucher") return `${docNo(d.txn.txn_type, d.txn.doc_no)}`;
   if (d.kind === "settlement") return `${t.settlementTitle} #${d.s.no}`;
+  if (d.kind === "report") return `${RL[lang].title} ${d.r.from} – ${d.r.to}`;
   return `${t.statement} — ${d.partner.name}`;
 }
 export function fileName(d: DocData, lang: DocLang) {
   const base = d.kind === "statement" ? `Capital-Statement-${d.partner.name}`
-    : d.kind === "settlement" ? `Profit-Distribution-${d.s.no}-${d.s.period_from}-to-${d.s.period_to}` : documentTitle(d, lang);
+    : d.kind === "settlement" ? `Profit-Distribution-${d.s.no}-${d.s.period_from}-to-${d.s.period_to}`
+    : d.kind === "report" ? `Report-${d.r.from}-to-${d.r.to}` : documentTitle(d, lang);
   return `${d.brand.name}-${base}-${lang}`.replace(/[^\p{L}\p{N}._-]+/gu, "-").replace(/-+/g, "-") + ".pdf";
 }
 
 export function renderDocument(d: DocData, lang: DocLang, opts: { toolbar?: { pdf: string; other: string } } = {}) {
   const t = L[lang];
   const body = d.kind === "invoice" ? invoiceBody(d, lang, t) : d.kind === "voucher" ? voucherBody(d, lang, t)
-    : d.kind === "settlement" ? settlementBody(d, lang, t) : statementBody(d, lang, t);
+    : d.kind === "settlement" ? settlementBody(d, lang, t) : d.kind === "report" ? reportBody(d, lang, t) : statementBody(d, lang, t);
   const toolbar = opts.toolbar
     ? `<div class="toolbar"><button onclick="window.print()">${esc(t.print)}</button><a class="primary" href="${esc(opts.toolbar.pdf)}">${esc(t.download)}</a><a href="${esc(opts.toolbar.other)}">${esc(t.other)}</a></div>`
     : "";

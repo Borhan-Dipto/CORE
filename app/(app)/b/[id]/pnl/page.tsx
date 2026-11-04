@@ -11,6 +11,7 @@ import { getCampaignPerformance } from "@/lib/campaignPerf";
 import { chartRange } from "@/lib/range";
 import { fmtMoney, fmtNum } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { DocumentMenu } from "@/components/documents";
 
 export const metadata = { title: "Profit & loss" };
 
@@ -29,7 +30,8 @@ export default async function PnlPage({ params, searchParams }: { params: Promis
     </div>
   );
   return (
-    <Page wide title={t.pnl} actions={<DateRange t={t} current={range.key} from={range.from} to={range.to} />}>
+    <Page wide title={t.pnl} actions={<><DateRange t={t} current={range.key} from={range.from} to={range.to} />
+      <DocumentMenu t={t} href={`/doc/report/${id}?from=${cr.from}&to=${cr.to}`} label={t.businessReport} /></>}>
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Kpi label={t.kpiRevenue} value={fmtMoney(pl.revenue, lang)} definition={t.kpiRevenueDef} />
         <Kpi label={t.kpiGross} value={fmtMoney(pl.gross_profit, lang)} definition={t.kpiGrossDef} tone={pl.gross_profit < 0 ? "negative" : "positive"} />

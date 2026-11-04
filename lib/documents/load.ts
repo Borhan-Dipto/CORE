@@ -3,7 +3,7 @@ import { getContext } from "@/lib/session";
 import { getOrder, type Order } from "@/lib/sales";
 
 export type DocLang = "bn" | "en";
-export type DocKind = "invoice" | "voucher" | "statement" | "settlement";
+export type DocKind = "invoice" | "voucher" | "statement" | "settlement" | "report";
 
 export type Brand = {
   name: string; address: string | null; phone: string | null; email: string | null;
@@ -28,7 +28,25 @@ export type DocData =
   | { kind: "voucher"; brand: Brand; txn: Txn }
   | { kind: "statement"; brand: Brand; partner: { name: string; email: string | null; share: number | null }; rows: StatementRow[];
       totals: { invested: number; profit: number; withdrawn: number; balance: number }; from: string | null; to: string }
-  | { kind: "settlement"; brand: Brand; s: SettlementDoc };
+  | { kind: "settlement"; brand: Brand; s: SettlementDoc }
+  | { kind: "report"; brand: Brand; r: ReportDoc };
+
+type Num = Record<string, number>;
+export type ReportDoc = {
+  from: string; to: string; prevFrom: string; prevTo: string;
+  pnl: Num; prev: Num;
+  orders: { placed: number; delivered: number; returned: number; cancelled: number; units: number; uncollected: number; uncollected_count: number; pipeline: number; pipeline_count: number };
+  prevOrders: { delivered: number };
+  daily: { day: string; revenue: number; gross_profit: number; orders: number }[];
+  products: { product: string; units: number; revenue: number; cost: number; profit: number }[];
+  campaigns: { campaign: string; spend: number; orders: number; revenue: number; roas: number | null }[];
+  categories: { name: string; total: number; ad: boolean }[];
+  sources: { source: string; orders: number; revenue: number }[];
+  accounts: { name: string; balance: number }[];
+  partners: { name: string; percentage: number | null; capital: number; share: number }[];
+  settlement: { no: number; distributable: number } | null;
+  investments: number; withdrawals: number; inventory: number;
+};
 
 export type SettlementDoc = {
   no: number; period_from: string; period_to: string; net_profit: number; carry_in: number; distributable: number; carry_out: number;
@@ -158,6 +176,68 @@ export async function loadDocument(kind: string, id: string, params: URLSearchPa
       no: st.settlement_no, period_from: st.period_from, period_to: st.period_to, net_profit: Number(st.net_profit), carry_in: Number(st.carry_in),
       distributable: Number(st.distributable), carry_out: Number(st.carry_out), status: st.status, void_reason: st.void_reason, note: st.note,
       created_at: st.created_at, created_by_name: st.created_by ? people.get(st.created_by) ?? null : null, pnl: (st.pnl ?? {}) as Record<string, unknown>, rows } };
+  }
+  if (kind === "report") {
+    const iso = /^\d{4}-\d{2}-\d{2}$/;
+    const from = params.get("from") ?? "", to = params.get("to") ?? "";
+    if (!iso.test(from) || !iso.test(to) || to < from) return null;
+    const brand = await loadBrand(id);
+    if (!brand) return null;
+    const days = Math.round((Date.parse(to) - Date.parse(from)) / 864e5) + 1;
+    const shift = (d: string, n: number) => new Date(Date.parse(d) + n * 864e5).toISOString().slice(0, 10);
+    const prevTo = shift(from, -1), prevFrom = shift(from, -days);
+    const rpc = (fn: string, args: Record<string, unknown>) => supabase.rpc(fn, args).then((r) => r.data);
+    const [pl, prev, os, prevOs, fs, accounts, capital, shares, ads, settled] = await Promise.all([
+      rpc("profit_and_loss", { p_business: id, p_from: from, p_to: to }),
+      rpc("profit_and_loss", { p_business: id, p_from: prevFrom, p_to: prevTo }),
+      rpc("order_summary", { p_business: id, p_from: from, p_to: to }),
+      rpc("order_summary", { p_business: id, p_from: prevFrom, p_to: prevTo }),
+      rpc("finance_summary", { p_business: id, p_from: from, p_to: to }),
+      rpc("account_balances", { p_business: id, p_as_of: to }),
+      rpc("partner_capital", { p_business: id }),
+      rpc("profit_shares_on", { p_business: id, p_date: to }),
+      supabase.from("financial_transactions").select("campaign_name, amount").eq("business_id", id).eq("txn_type", "expense")
+        .eq("is_advertising", true).eq("status", "posted").gte("txn_date", from).lte("txn_date", to).then((r) => r.data),
+      supabase.from("profit_settlements").select("settlement_no, distributable").eq("business_id", id).eq("status", "final")
+        .eq("period_from", from).eq("period_to", to).maybeSingle().then((r) => r.data),
+    ]);
+    if (!pl) return null;
+    const n = (v: unknown) => Number(v ?? 0);
+    const numify = (o: unknown): Num => Object.fromEntries(Object.entries((o ?? {}) as Record<string, unknown>).filter(([, v]) => typeof v === "number" || (typeof v === "string" && v !== "" && !isNaN(Number(v)))).map(([k, v]) => [k, Number(v)]));
+    const O = (os ?? {}) as Record<string, unknown>;
+    const F = (fs ?? {}) as Record<string, unknown>;
+    const arr = <T,>(v: unknown) => ((v as T[]) ?? []);
+    // campaigns: ad spend (ledger) joined with delivered results (orders)
+    const spend = new Map<string, { name: string; spend: number }>();
+    (ads ?? []).forEach((r) => { const nm = (r.campaign_name as string | null)?.trim() || "—"; const k = nm.toLowerCase(); const x = spend.get(k) ?? { name: nm, spend: 0 }; x.spend += n(r.amount); spend.set(k, x); });
+    const camp = new Map<string, { campaign: string; spend: number; orders: number; revenue: number }>();
+    spend.forEach((v, k) => camp.set(k, { campaign: v.name, spend: v.spend, orders: 0, revenue: 0 }));
+    arr<Record<string, unknown>>(O.by_campaign).forEach((c) => { const nm = String(c.campaign); const k = nm.trim().toLowerCase(); const x = camp.get(k) ?? { campaign: nm, spend: 0, orders: 0, revenue: 0 }; x.orders += n(c.orders); x.revenue += n(c.revenue); camp.set(k, x); });
+    const memberIds = arr<Record<string, unknown>>(capital).map((c) => String(c.partner_id));
+    const people = await names(memberIds);
+    const shareRows = arr<Record<string, unknown>>(shares);
+    const net = n((pl as Record<string, unknown>).net_profit);
+    const status = (O.by_status ?? {}) as Record<string, number>;
+    return { kind, brand, r: {
+      from, to, prevFrom, prevTo, pnl: numify(pl), prev: numify(prev),
+      orders: { placed: n(O.orders_placed), delivered: n(O.delivered_count), returned: n(O.returned_count), cancelled: n(status.cancelled),
+        units: n(O.units_sold), uncollected: n(O.uncollected), uncollected_count: n(O.uncollected_count), pipeline: n(O.pipeline_value), pipeline_count: n(O.pipeline_count) },
+      prevOrders: { delivered: n((prevOs as Record<string, unknown> | null)?.delivered_count) },
+      daily: days > 92 ? [] : arr<Record<string, unknown>>(O.daily).map((d) => ({ day: String(d.day), revenue: n(d.revenue), gross_profit: n(d.gross_profit), orders: n(d.orders) })),
+      products: arr<Record<string, unknown>>(O.by_product).map((p) => ({ product: String(p.product), units: n(p.units), revenue: n(p.revenue), cost: n(p.cost), profit: n(p.profit) }))
+        .sort((a, b) => b.revenue - a.revenue).slice(0, 12),
+      campaigns: [...camp.values()].map((c) => ({ ...c, roas: c.spend > 0 ? c.revenue / c.spend : null })).sort((a, b) => b.spend - a.spend || b.revenue - a.revenue).slice(0, 10),
+      categories: arr<Record<string, unknown>>((pl as Record<string, unknown>).opex_by_category).map((c) => ({ name: String(c.name ?? "—"), total: n(c.total), ad: false })),
+      sources: arr<Record<string, unknown>>(O.by_source).map((x) => ({ source: String(x.source), orders: n(x.orders), revenue: n(x.revenue) })),
+      accounts: arr<Record<string, unknown>>(accounts).filter((a) => a.is_active !== false || n(a.balance) !== 0).map((a) => ({ name: String(a.name), balance: n(a.balance) })),
+      partners: arr<Record<string, unknown>>(capital).map((c) => {
+        const pct = shareRows.find((s) => s.user_id === c.partner_id);
+        const p = pct ? n(pct.percentage) : null;
+        return { name: people.get(String(c.partner_id)) ?? "—", percentage: p, capital: n(c.balance), share: p !== null && net > 0 ? Math.round(net * p) / 100 : 0 };
+      }).sort((a, b) => (b.percentage ?? 0) - (a.percentage ?? 0)),
+      settlement: settled ? { no: settled.settlement_no, distributable: n(settled.distributable) } : null,
+      investments: n(F.investments), withdrawals: n(F.withdrawals), inventory: n((pl as Record<string, unknown>).inventory_purchases),
+    } };
   }
   return null;
 }
