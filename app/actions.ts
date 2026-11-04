@@ -8,12 +8,13 @@ import { dispatchEmails } from "@/lib/notify/dispatch";
 import { createClient } from "@/lib/supabase/server";
 import { getT, siteUrl } from "@/lib/session";
 import { errorKey, type Dict } from "@/lib/i18n";
+import { parseAmount } from "@/lib/utils";
 
 export type FormState = { error?: string; ok?: string; link?: string; email?: string; checkEmail?: boolean; at?: number };
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const opt = (fd: FormData, k: string) => str(fd, k) || null;
-const amount = (fd: FormData, k = "amount") => Number(str(fd, k).replace(/[^\d.]/g, "")) || 0;
+const amount = (fd: FormData, k = "amount") => parseAmount(str(fd, k));
 const safeNext = (n: string) => (n.startsWith("/") && !n.startsWith("//") ? n : "/");
 const INVITE_COOKIE = "core_invite";
 
@@ -192,7 +193,7 @@ export async function saveProfitSplit(_: FormState, fd: FormData): Promise<FormS
   const businessId = str(fd, "business_id");
   const pct = fd.getAll("percentage");
   const shares = fd.getAll("user_id").map((u, i) => ({
-    user_id: String(u), percentage: Number(String(pct[i] ?? "0").replace(/[^\d.]/g, "")) || 0,
+    user_id: String(u), percentage: parseAmount(pct[i] ?? "0"),
   }));
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_profit_shares", { p_business: businessId, p_effective: str(fd, "effective_from"), p_shares: shares });

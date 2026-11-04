@@ -12,17 +12,17 @@ import { ConfirmDialog, Dialog, DialogContent, DialogTrigger } from "@/component
 import { Field, Input, Textarea } from "@/components/ui/form";
 import { Select } from "@/components/ui/select";
 import { fmtMoney, type Dict, type Lang } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+import { cn, parseAmount } from "@/lib/utils";
 
 const init: FormState = {};
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Dhaka" }).format(new Date());
-const n = (v: string) => Number(String(v).replace(/[^\d.]/g, "")) || 0;
+const n = (v: string) => parseAmount(v);
 
 function ErrorText({ msg }: { msg?: string }) {
   return msg ? <p role="alert" className="rounded-md border border-destructive/25 bg-destructive-soft px-3 py-2 text-[13px] text-destructive">{msg}</p> : null;
 }
 function MoneyInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <Input inputMode="decimal" pattern="[0-9.,]*" className="tabular" placeholder="0" {...props} />;
+  return <Input inputMode="decimal" pattern="[0-9০-৯.,]*" className="tabular" placeholder="0" {...props} />;
 }
 
 export type ProductOpt = { id: string; name: string; cost_price: number; sell_price: number; is_active: boolean };

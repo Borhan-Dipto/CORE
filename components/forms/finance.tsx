@@ -62,7 +62,7 @@ function AmountDate({ t }: { t: Dict }) {
   return (
     <div className="grid grid-cols-2 gap-3">
       <Field label={`${t.amount} (৳)`} htmlFor="f-amount">
-        <Input id="f-amount" name="amount" inputMode="decimal" required placeholder="0" pattern="[0-9.,]*" className="tabular text-base font-medium" autoFocus />
+        <Input id="f-amount" name="amount" inputMode="decimal" required placeholder="0" pattern="[0-9০-৯.,]*" className="tabular text-base font-medium" autoFocus />
       </Field>
       <Field label={t.date} htmlFor="f-date"><Input id="f-date" name="date" type="date" required defaultValue={today()} max={today()} /></Field>
     </div>

@@ -12,10 +12,10 @@ import { ConfirmDialog, Dialog, DialogContent, DialogTrigger } from "@/component
 import { Field, Input, Textarea } from "@/components/ui/form";
 import { Select } from "@/components/ui/select";
 import { fmtDate, fmtMoney, fmtNum, type Dict, type Lang } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+import { cn, parseAmount } from "@/lib/utils";
 
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Dhaka" }).format(new Date());
-const n = (v: string) => Number(String(v).replace(/[^\d.]/g, "")) || 0;
+const n = (v: string) => parseAmount(v);
 type Acc = { id: string; name: string; type: string; is_active: boolean };
 
 function ErrorText({ msg }: { msg?: string }) {
