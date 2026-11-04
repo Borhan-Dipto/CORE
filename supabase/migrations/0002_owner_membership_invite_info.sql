@@ -64,6 +64,6 @@ create trigger audit_profit_delete after delete on public.profit_sharing_rules
 
 revoke all on function public.add_creator_membership() from public, anon, authenticated;
 revoke all on function public.add_owner_membership(uuid), public.invitation_info(text),
-               public.set_profit_shares(uuid, date, jsonb) from public;
+               public.set_profit_shares(uuid, date, jsonb) from public, anon, authenticated;
 grant execute on function public.add_owner_membership(uuid), public.set_profit_shares(uuid, date, jsonb) to authenticated;
 grant execute on function public.invitation_info(text) to anon, authenticated;
