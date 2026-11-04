@@ -1,59 +1,84 @@
 import Link from "next/link";
-import { getContext, getT } from "@/lib/session";
-import { fmtDate, fmtNum } from "@/lib/i18n";
+import { ArrowRight, Building2, Landmark, Megaphone, Receipt, Wallet } from "lucide-react";
+import { Page, EmptyState } from "@/components/shell/Page";
+import { Kpi } from "@/components/data/Kpi";
+import { DateRange } from "@/components/data/DateRange";
+import { ComparisonChart } from "@/components/charts/Charts";
+import { NewBusinessDialog } from "@/components/forms/core";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
+import { getBusinesses, getContext, getT } from "@/lib/session";
+import { resolveRange } from "@/lib/range";
+import { fmtMoney, fmtNum } from "@/lib/i18n";
 
-export default async function OverviewPage() {
-  const [{ supabase, isOwner, profile, user }, { lang, t }] = await Promise.all([getContext(), getT()]);
-  const [{ data: businesses }, { data: members }] = await Promise.all([
-    supabase.from("businesses").select("id, name, category, status, created_at").order("status").order("name"),
-    supabase.from("business_members").select("business_id, user_id").eq("status", "active"),
-  ]);
-  const list = businesses ?? [];
-  const countFor = (id: string) => (members ?? []).filter((m) => m.business_id === id).length;
-  const active = list.filter((b) => b.status === "active").length;
-  const uniquePartners = new Set((members ?? []).map((m) => m.user_id)).size;
+type Row = { business_id: string; name: string; status: string; expenses: number; ad_spend: number; income: number; investments: number; cash_balance: number; partners: number };
+
+export default async function OverviewPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
+  const sp = await searchParams;
+  const range = resolveRange(sp);
+  const [{ supabase, isOwner, name }, { lang, t }, businesses] = await Promise.all([getContext(), getT(), getBusinesses()]);
+  const { data } = await supabase.rpc("global_summary", { p_from: range.from, p_to: range.to });
+  const rows = ((data ?? []) as Row[]).map((r) => ({ ...r, expenses: +r.expenses, ad_spend: +r.ad_spend, investments: +r.investments, cash_balance: +r.cash_balance, partners: +r.partners }));
+  const active = rows.filter((r) => r.status === "active");
+  const sum = (k: keyof Row) => active.reduce((s, r) => s + Number(r[k]), 0);
+  const first = name.split(/\s+/)[0];
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted">{t.welcome}</p>
-          <h1 className="text-2xl font-semibold">{profile?.full_name || user.email}</h1>
-        </div>
-        {isOwner && <Link href="/businesses/new" className="btn-primary">+ {t.newBusiness}</Link>}
-      </div>
-
-      {isOwner && (
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          {[[t.activeBusinesses, active], [t.archivedBusinesses, list.length - active], [t.totalPartners, uniquePartners]].map(([label, n]) => (
-            <div key={String(label)} className="card p-4">
-              <p className="text-sm text-muted">{label}</p>
-              <p className="mt-1 text-2xl font-semibold">{fmtNum(Number(n), lang)}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <h2 className="mt-8 mb-3 text-sm font-semibold uppercase tracking-wide text-muted">{t.businesses}</h2>
-      {list.length === 0 ? (
-        <div className="card p-8 text-center text-sm text-muted">{isOwner ? t.noBusinessesOwner : t.noBusinessesPartner}</div>
+    <Page wide title={`${t.welcome}, ${first}`} description={isOwner ? t.greetingOwner : t.greetingPartner}
+      actions={<>{businesses.length > 0 && <DateRange t={t} current={range.key} from={range.from} to={range.to} />}{isOwner && <NewBusinessDialog t={t} />}</>}>
+      {businesses.length === 0 ? (
+        <EmptyState icon={Building2} title={isOwner ? t.newBusiness : t.noBusinessesPartner} description={isOwner ? t.noBusinessesOwner : undefined}
+          action={isOwner ? <NewBusinessDialog t={t} /> : undefined} />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map((b) => (
-            <Link key={b.id} href={`/b/${b.id}`} className="card block p-4 transition hover:border-ink">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold">{b.name}</h3>
-                <span className={`rounded-full px-2 py-0.5 text-xs ${b.status === "active" ? "bg-green-50 text-profit" : "bg-canvas text-muted"}`}>
-                  {b.status === "active" ? t.active : t.archived}
-                </span>
-              </div>
-              {b.category && <p className="mt-1 text-sm text-muted">{b.category}</p>}
-              <p className="mt-4 text-xs text-muted">{t.partners}: {fmtNum(countFor(b.id), lang)} · {fmtDate(b.created_at, lang)}</p>
-            </Link>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <Kpi label={t.activeBusinesses} value={fmtNum(active.length, lang)} icon={<Building2 />} />
+            <Kpi label={t.totalSpend} value={fmtMoney(sum("expenses"), lang)} definition={t.kpiExpensesDef} icon={<Receipt />} />
+            <Kpi label={t.totalAdSpend} value={fmtMoney(sum("ad_spend"), lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} />
+            <Kpi label={t.totalCash} value={fmtMoney(sum("cash_balance"), lang)} definition={t.kpiCashDef} icon={<Wallet />}
+              tone={sum("cash_balance") < 0 ? "negative" : undefined} />
+          </div>
+
+          {active.length > 1 && (
+            <Card>
+              <CardHeader><CardTitle>{t.comparison}</CardTitle><CardDescription>{t.comparisonDesc}</CardDescription></CardHeader>
+              <CardContent>
+                <ComparisonChart lang={lang} labels={{ expenses: t.kpiExpenses, ads: t.kpiAdSpend, cash: t.kpiCash }}
+                  data={active.map((r) => ({ name: r.name, expenses: r.expenses, ad_spend: r.ad_spend, cash: r.cash_balance }))} />
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {rows.map((r) => (
+              <Link key={r.business_id} href={`/b/${r.business_id}`} className="group outline-none">
+                <Card className="h-full p-5 transition group-hover:border-foreground/20 group-hover:shadow-pop group-focus-visible:ring-2 group-focus-visible:ring-ring/60">
+                  <div className="flex items-start gap-3">
+                    <Avatar name={r.name} seed={r.business_id} size="lg" square />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="truncate font-semibold">{r.name}</h3>
+                        {r.status === "archived" && <Badge>{t.archived}</Badge>}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{fmtNum(r.partners, lang)} {t.partners}</p>
+                    </div>
+                    <ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
+                  </div>
+                  <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-border pt-4">
+                    {[[t.kpiExpenses, r.expenses], [t.kpiAdSpend, r.ad_spend], [t.kpiCash, r.cash_balance]].map(([l, v]) => (
+                      <div key={String(l)} className="min-w-0">
+                        <dt className="truncate text-[11px] text-muted-foreground">{l}</dt>
+                        <dd className={`tabular truncate text-sm font-semibold ${Number(v) < 0 ? "text-destructive" : ""}`}>{fmtMoney(Number(v), lang, { compact: true })}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Card>
+              </Link>
+            ))}
+          </div>
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Landmark className="size-3.5" /> {t.salesComing}</p>
+        </>
       )}
-      <p className="mt-8 text-xs text-muted">{t.financeComing}</p>
-    </main>
+    </Page>
   );
 }

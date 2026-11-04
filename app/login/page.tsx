@@ -1,27 +1,25 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AuthShell } from "@/components/Brand";
-import { LoginForm } from "@/components/forms";
-import { LangToggle } from "@/components/LangToggle";
+import { AuthShell } from "@/components/shell/AuthShell";
+import { AuthLang } from "@/components/shell/AuthLang";
+import { LoginForm } from "@/components/forms/core";
 import { createClient } from "@/lib/supabase/server";
 import { getT } from "@/lib/session";
 
 export const metadata = { title: "Login" };
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; link?: string }> }) {
-  const { next = "/", link } = await searchParams;
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; notice?: string }> }) {
+  const { next = "/", notice } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (user) redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/");
+  const safe = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  if (user) redirect(safe);
   const { lang, t } = await getT();
   return (
-    <AuthShell
-      title={t.login}
-      subtitle={t.appTagline}
-      footer={<div className="flex items-center gap-4"><Link className="link" href="/forgot">{t.forgotPassword}</Link><LangToggle lang={lang} /></div>}
-    >
-      {link === "expired" && <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-pending">{t.err_invalid_invitation}</p>}
-      <LoginForm t={t} next={next} />
+    <AuthShell t={t} title={t.welcomeBack} subtitle={t.loginSubtitle}
+      footer={<div className="flex items-center justify-between"><Link className="font-medium text-foreground hover:underline" href="/forgot">{t.forgotPassword}</Link><AuthLang lang={lang} /></div>}>
+      {notice === "confirmed" && <p className="mb-5 rounded-md border border-brand/25 bg-brand-soft px-3 py-2.5 text-[13px] text-brand">{t.confirmedNotice}</p>}
+      <LoginForm t={t} next={safe} />
     </AuthShell>
   );
 }

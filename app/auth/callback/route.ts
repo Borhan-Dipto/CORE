@@ -19,5 +19,7 @@ export async function GET(request: NextRequest) {
       ? await supabase.auth.verifyOtp({ token_hash: tokenHash, type })
       : { error: new Error("missing code") };
 
-  return NextResponse.redirect(new URL(error ? "/login?link=expired" : next, origin));
+  // Confirmation links often open in a different browser (e.g. the Gmail app), so the PKCE
+  // exchange can fail even though the email *was* confirmed. Send them to log in.
+  return NextResponse.redirect(new URL(error ? "/login?notice=confirmed" : next, origin));
 }

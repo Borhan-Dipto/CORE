@@ -11,8 +11,18 @@ One platform. Every business. Complete control.
 - Tamper-proof activity log per business
 - Bangla / English toggle, mobile-friendly
 
+## Phase 2 — Finance
+- Accounts (Cash, bKash, Nagad, Bank…) with live balances; transfers between accounts
+- Expenses with custom categories; dedicated Advertising/Boosting view (platform, campaign, product)
+- Partner investments & withdrawals; an expense a partner pays personally is automatically their capital contribution
+- Immutable ledger: entries are never edited or deleted — corrections are reversals with a reason
+- Dashboards with date ranges, KPI definitions, charts, CSV export
+
+## Design system
+shadcn/ui pattern on Radix primitives, Tailwind v4 tokens (`app/globals.css`), Lucide icons, Recharts, TanStack Table, light/dark/system themes, Inter + Noto Sans Bengali.
+
 ## Setup
-1. Supabase → SQL Editor: run `supabase/migrations/0001_foundation.sql`, then `0002_owner_membership_invite_info.sql`.
+1. Supabase → SQL Editor: run the files in `supabase/migrations/` in order (0001 → 0004).
 2. Create your user in Authentication → Users, then make it the owner:
    `insert into public.platform_owners (user_id) select id from auth.users where email = 'you@example.com';`
 3. Environment variables (Vercel → Settings → Environment Variables), see `.env.example`:

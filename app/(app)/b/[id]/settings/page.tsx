@@ -1,6 +1,6 @@
-import { BusinessForm } from "@/components/forms";
-import { ActionButton } from "@/components/ui";
-import { setBusinessStatus } from "@/app/actions";
+import { Page } from "@/components/shell/Page";
+import { ArchiveButton, BusinessEditForm } from "@/components/forms/core";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBusiness, getT, requireOwner } from "@/lib/session";
 
 export const metadata = { title: "Settings" };
@@ -11,23 +11,12 @@ export default async function SettingsPage({ params }: { params: Promise<{ id: s
   const [business, { t }] = await Promise.all([getBusiness(id), getT()]);
   const archived = business.status === "archived";
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <section className="card p-6">
-        <h2 className="mb-4 font-semibold">{t.businessDetails}</h2>
-        <BusinessForm t={t} business={business} disabled={archived} />
-      </section>
-      <section className="card p-6">
-        <h2 className="font-semibold">{archived ? t.restoreBusiness : t.archiveBusiness}</h2>
-        <p className="mt-1 mb-4 text-sm text-muted">{t.archiveHelp}</p>
-        <ActionButton
-          action={setBusinessStatus}
-          fields={{ id, status: archived ? "active" : "archived" }}
-          className={archived ? "btn-primary" : "btn-danger"}
-          confirm={archived ? undefined : t.confirmArchive}
-        >
-          {archived ? t.restoreBusiness : t.archiveBusiness}
-        </ActionButton>
-      </section>
-    </div>
+    <Page title={t.settings} className="max-w-3xl">
+      <Card><CardHeader><CardTitle>{t.businessDetails}</CardTitle></CardHeader><CardContent><BusinessEditForm t={t} business={business} disabled={archived} /></CardContent></Card>
+      <Card className={archived ? "" : "border-destructive/25"}>
+        <CardHeader><CardTitle>{archived ? t.restoreBusiness : t.archiveBusiness}</CardTitle><CardDescription>{t.archiveHelp}</CardDescription></CardHeader>
+        <CardContent><ArchiveButton t={t} id={id} archived={archived} /></CardContent>
+      </Card>
+    </Page>
   );
 }
