@@ -10,6 +10,7 @@ import { Menu, MenuTrigger, MenuContent, MenuItem, MenuLabel, MenuSeparator, Men
 import { Sidebar, NavList } from "@/components/shell/Sidebar";
 import { Logo } from "@/components/shell/Logo";
 import { navSections } from "@/components/shell/nav";
+import { NotificationBell } from "@/components/shell/NotificationBell";
 import { logout, setLang, setTheme } from "@/app/actions";
 import type { Dict, Lang } from "@/lib/i18n";
 import type { Theme } from "@/lib/session";
@@ -17,9 +18,9 @@ import { cn } from "@/lib/utils";
 
 type B = { id: string; name: string; status: string };
 
-export function AppShell({ children, t, lang, theme, isOwner, user, businesses, initialCollapsed }: {
+export function AppShell({ children, t, lang, theme, isOwner, user, businesses, initialCollapsed, unread = 0 }: {
   children: React.ReactNode; t: Dict; lang: Lang; theme: Theme; isOwner: boolean;
-  user: { name: string; email: string }; businesses: B[]; initialCollapsed: boolean;
+  user: { name: string; email: string }; businesses: B[]; initialCollapsed: boolean; unread?: number;
 }) {
   const path = usePathname();
   const businessId = path.match(/^\/b\/([0-9a-f-]{36})/i)?.[1] ?? null;
@@ -54,6 +55,7 @@ export function AppShell({ children, t, lang, theme, isOwner, user, businesses, 
           <BusinessSwitcher t={t} businesses={businesses} current={current} isOwner={isOwner} />
 
           <div className="ml-auto flex items-center gap-1">
+            <NotificationBell t={t} lang={lang} initialUnread={unread} />
             <LangToggle lang={lang} />
             <ThemeMenu t={t} theme={theme} />
             <UserMenu t={t} user={user} />

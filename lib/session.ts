@@ -32,7 +32,7 @@ export const getContext = cache(async () => {
   if (!user) redirect("/login");
   const [{ data: isOwner }, { data: profile }] = await Promise.all([
     supabase.rpc("is_platform_owner"),
-    supabase.from("profiles").select("full_name, email, language, theme").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("full_name, email, language, theme, notify_prefs").eq("id", user.id).maybeSingle(),
   ]);
   return { supabase, user, isOwner: !!isOwner, profile, name: profile?.full_name || user.email || "" };
 });

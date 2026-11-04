@@ -140,3 +140,26 @@ export function InvoiceSettingsForm({ t, businessId, settings, disabled }: { t: 
     </form>
   );
 }
+
+export function NotifyPrefsForm({ t, initial }: { t: Dict; initial: { email: boolean; weekly: boolean } }) {
+  const [prefs, setPrefs] = React.useState(initial);
+  const [saving, setSaving] = React.useState(false);
+  async function toggle(k: "email" | "weekly") {
+    const next = { ...prefs, [k]: !prefs[k] };
+    setPrefs(next);
+    setSaving(true);
+    const r = await A.saveNotifyPrefs(next);
+    setSaving(false);
+    if (r.error) { toast.error(r.error); setPrefs(prefs); } else toast.success(r.ok);
+  }
+  const row = (k: "email" | "weekly", label: string, hint: string) => (
+    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-border p-4">
+      <span><span className="block text-sm font-medium">{label}</span><span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span></span>
+      <button type="button" role="switch" aria-checked={prefs[k]} disabled={saving} onClick={() => toggle(k)}
+        className={`relative mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full transition ${prefs[k] ? "bg-brand" : "bg-muted-foreground/30"}`}>
+        <span className={`inline-block size-4 rounded-full bg-white shadow transition ${prefs[k] ? "translate-x-4.5" : "translate-x-0.5"}`} />
+      </button>
+    </label>
+  );
+  return <div className="grid gap-3">{row("email", t.notifyEmail, t.notifyEmailHint)}{row("weekly", t.notifyWeekly, t.notifyWeeklyHint)}</div>;
+}

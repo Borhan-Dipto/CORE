@@ -3,6 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { dispatchEmails } from "@/lib/notify/dispatch";
 import { createClient } from "@/lib/supabase/server";
 import { getT, siteUrl } from "@/lib/session";
 import { errorKey, type Dict } from "@/lib/i18n";
@@ -26,6 +28,10 @@ async function fail(e: { message?: string; code?: string } | null, ctx?: "invite
 }
 async function ok(key: keyof Dict, extra: Partial<FormState> = {}): Promise<FormState> {
   return { ok: await msg(key), at: Date.now(), ...extra };
+}
+/** Email partners about the change after the response is sent (never blocks or fails the action). */
+function notifyLater(supabase: Awaited<ReturnType<typeof createClient>>, businessId: string) {
+  after(() => dispatchEmails(supabase, businessId));
 }
 function refresh(businessId?: string) {
   if (businessId) revalidatePath(`/b/${businessId}`, "layout");
@@ -260,6 +266,7 @@ async function post(args: Post, okKey: keyof Dict): Promise<FormState> {
   const { error } = await supabase.rpc("post_transaction", args);
   if (error) return fail(error);
   refresh(args.p_business);
+  notifyLater(supabase, args.p_business);
   return ok(okKey);
 }
 
@@ -310,6 +317,7 @@ export async function reverseTxn(txnId: string, businessId: string, reason: stri
   const { error } = await supabase.rpc("reverse_transaction", { p_txn: txnId, p_reason: reason });
   if (error) return fail(error);
   refresh(businessId);
+  notifyLater(supabase, businessId);
   return ok("reversedOk");
 }
 
@@ -497,6 +505,7 @@ export async function settleProfit(_: FormState, fd: FormData): Promise<FormStat
   });
   if (error) return fail(error);
   refresh(businessId);
+  notifyLater(supabase, businessId);
   return ok("settleDone");
 }
 
@@ -509,6 +518,7 @@ export async function payProfit(_: FormState, fd: FormData): Promise<FormState> 
   });
   if (error) return fail(error);
   refresh(businessId);
+  notifyLater(supabase, businessId);
   return ok("saved");
 }
 
@@ -517,5 +527,30 @@ export async function voidSettlement(settlementId: string, businessId: string, r
   const { error } = await supabase.rpc("void_settlement", { p_settlement: settlementId, p_reason: reason });
   if (error) return fail(error);
   refresh(businessId);
+  notifyLater(supabase, businessId);
+  return ok("saved");
+}
+
+// ---------- Notifications ----------
+export async function getMyNotifications() {
+  const supabase = await createClient();
+  const { data } = await supabase.from("notifications").select("id, kind, payload, link, read_at, created_at, business_id")
+    .order("created_at", { ascending: false }).limit(30);
+  return data ?? [];
+}
+
+export async function markNotificationsRead(ids?: string[]) {
+  const supabase = await createClient();
+  let q = supabase.from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
+  if (ids?.length) q = q.in("id", ids);
+  await q;
+}
+
+export async function saveNotifyPrefs(prefs: { email: boolean; weekly: boolean }): Promise<FormState> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return fail({ message: "not_authorized" });
+  const { error } = await supabase.from("profiles").update({ notify_prefs: { email: !!prefs.email, weekly: !!prefs.weekly } }).eq("id", user.id);
+  if (error) return fail(error);
   return ok("saved");
 }
