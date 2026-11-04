@@ -448,3 +448,23 @@ export async function importOrders(businessId: string, rows: ImportRow[]): Promi
   refresh(businessId);
   return res;
 }
+
+// ---------- Invoice & document settings ----------
+export async function saveInvoiceSettings(_: FormState, fd: FormData): Promise<FormState> {
+  const businessId = str(fd, "business_id");
+  const logo = str(fd, "logo_data");
+  const row: Record<string, string | null> = {
+    business_id: businessId,
+    tagline: opt(fd, "tagline"), website: opt(fd, "website"), payment_info: opt(fd, "payment_info"),
+    policy_note: opt(fd, "policy_note"), thank_you: opt(fd, "thank_you"), signatory: opt(fd, "signatory"),
+  };
+  if (logo !== "__keep__") {
+    if (logo && !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(logo)) return { error: await msg("logoTooBig"), at: Date.now() };
+    row.logo_data = logo || null;
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.from("business_invoice_settings").upsert(row, { onConflict: "business_id" });
+  if (error) return fail(error);
+  refresh(businessId);
+  return ok("saved");
+}

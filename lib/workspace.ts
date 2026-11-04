@@ -13,7 +13,7 @@ export type Txn = {
   id: string; txn_type: string; status: string; txn_date: string; amount: number; account_id: string | null; to_account_id: string | null;
   category_name: string | null; is_advertising: boolean; partner_id: string | null; ad_platform: string | null; campaign_name: string | null;
   target_product: string | null; title: string | null; description: string | null; reference: string | null; linked_txn_id: string | null;
-  reversal_of: string | null; reversal_reason: string | null; created_at: string;
+  reversal_of: string | null; reversal_reason: string | null; created_at: string; doc_no: number | null;
 };
 export type Summary = {
   expenses: number; ad_spend: number; income: number; investments: number; withdrawals: number; expense_count: number;
@@ -82,7 +82,7 @@ export const getSummary = cache(async (businessId: string, from: string, to: str
 export async function getTransactions(businessId: string, range: DateRange, opts: { types?: string[]; adsOnly?: boolean; limit?: number; includeReversals?: boolean } = {}): Promise<Txn[]> {
   const { supabase } = await getContext();
   let q = supabase.from("financial_transactions")
-    .select("id, txn_type, status, txn_date, amount, account_id, to_account_id, category_name, is_advertising, partner_id, ad_platform, campaign_name, target_product, title, description, reference, linked_txn_id, reversal_of, reversal_reason, created_at")
+    .select("id, txn_type, status, txn_date, amount, account_id, to_account_id, category_name, is_advertising, partner_id, ad_platform, campaign_name, target_product, title, description, reference, linked_txn_id, reversal_of, reversal_reason, created_at, doc_no")
     .eq("business_id", businessId).gte("txn_date", range.from).lte("txn_date", range.to)
     .order("txn_date", { ascending: false }).order("created_at", { ascending: false }).limit(opts.limit ?? 2000);
   if (opts.types?.length) q = q.in("txn_type", opts.types);

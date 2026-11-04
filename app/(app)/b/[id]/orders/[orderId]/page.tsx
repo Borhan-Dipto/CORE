@@ -10,6 +10,8 @@ import { loadBizPage } from "@/lib/bizpage";
 import { getOrder } from "@/lib/sales";
 import { fmtDate, fmtMoney, fmtNum } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { DocumentMenu } from "@/components/documents";
+import { invoiceNo } from "@/lib/documents/numbers";
 
 export const metadata = { title: "Order" };
 
@@ -28,7 +30,8 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   ];
   return (
     <Page title={`${t.orderNo} ${o.order_no}`} description={`${fmtDate(o.order_date, lang)} · ${t.orderSources[o.source]}`}
-      actions={<Button asChild variant="ghost" size="sm"><Link href={`/b/${id}/orders`}><ArrowLeft /> {t.orders}</Link></Button>}>
+      actions={<><Button asChild variant="ghost" size="sm"><Link href={`/b/${id}/orders`}><ArrowLeft /> {t.orders}</Link></Button>
+        <DocumentMenu t={t} href={`/doc/invoice/${o.id}`} label={`${t.invoice} · ${invoiceNo(o.order_no)}`} variant="default" /></>}>
       <Card className="flex flex-wrap items-center gap-3 p-4">
         <Badge variant={STATUS_TONE[o.status]} className="text-sm">{t.orderStatuses[o.status]}</Badge>
         {o.status === "delivered" && <Badge variant={o.collected ? "success" : "warning"}>{o.collected ? `${t.collected} · ${fmtMoney(o.collected_amount, lang)}` : t.notCollected}</Badge>}

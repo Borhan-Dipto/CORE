@@ -3,6 +3,7 @@ import { Kpi } from "@/components/data/Kpi";
 import { LedgerTable } from "@/components/data/LedgerTable";
 import { InvestmentDialog, WithdrawalDialog } from "@/components/forms/finance";
 import { Card } from "@/components/ui/card";
+import { DocumentMenu } from "@/components/documents";
 import { Avatar } from "@/components/ui/avatar";
 import { loadBizPage } from "@/lib/bizpage";
 import { getTransactions } from "@/lib/workspace";
@@ -36,6 +37,7 @@ export default async function CapitalPage({ params }: { params: Promise<{ id: st
                   <p className="truncate font-semibold">{m.name}</p>
                   <p className="text-xs text-muted-foreground">{t.profitShare}: {m.percentage === null ? t.noSplit : `${fmtNum(m.percentage, lang)}%`}</p>
                 </div>
+                <DocumentMenu t={t} href={`/doc/statement/${id}?partner=${m.user_id}`} label={t.capitalStatement} variant="ghost" iconOnly />
               </div>
               <p className="tabular mt-4 text-2xl font-semibold tracking-tight">{fmtMoney(m.capital, lang)}</p>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-chart-1" style={{ width: `${pct}%` }} /></div>

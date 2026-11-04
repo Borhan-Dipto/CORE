@@ -152,6 +152,14 @@ const en = {
   modules: { businesses: "Business", business_members: "Partner", business_invitations: "Invite", profit_sharing_rules: "Profit share",
     financial_transactions: "Ledger entry", business_accounts: "Account", expense_categories: "Category", orders: "Order", products: "Product" } as Record<string, string>,
   auditActions: { insert: "created", update: "updated", delete: "removed" } as Record<string, string>,
+  documents: "Documents", invoice: "Invoice", voucher: "Voucher", receipt: "Receipt", capitalStatement: "Capital statement",
+  docPreview: "Preview", docDownload: "Download PDF", docPreparing: "Preparing PDF…", docReady: "PDF downloaded", docFailed: "Couldn't create the PDF. Open the preview and use Print → Save as PDF.",
+  langBangla: "বাংলা", langEnglish: "English",
+  invoiceSettings: "Invoice & documents", invoiceSettingsHelp: "Shown on every invoice, voucher, receipt and statement.",
+  logo: "Logo", logoHelp: "PNG or JPG, square or wide. It is resized automatically.", uploadLogo: "Upload logo", removeLogo: "Remove", logoTooBig: "That image couldn't be used. Try a smaller PNG or JPG.",
+  tagline: "Tagline", website: "Website", paymentInfo: "Payment information", paymentInfoPh: "bKash (Personal): 01XXXXXXXXX\nBank: City Bank, A/C 123…",
+  policyNote: "Return / warranty policy", policyNotePh: "7-day replacement for manufacturing defects…", thankYou: "Thank-you message", thankYouPh: "Thank you for shopping with us!",
+  signatory: "Authorized signatory (name / title)", signatoryPh: "Iftekhar Rasul, Managing Partner", previewInvoice: "Preview a sample",
 };
 
 const bn: typeof en = {
@@ -292,6 +300,14 @@ const bn: typeof en = {
   modules: { businesses: "বিজনেস", business_members: "পার্টনার", business_invitations: "ইনভাইট", profit_sharing_rules: "লাভ ভাগ",
     financial_transactions: "হিসাবের এন্ট্রি", business_accounts: "অ্যাকাউন্ট", expense_categories: "ক্যাটাগরি", orders: "অর্ডার", products: "প্রোডাক্ট" },
   auditActions: { insert: "তৈরি হয়েছে", update: "আপডেট হয়েছে", delete: "সরানো হয়েছে" },
+  documents: "ডকুমেন্ট", invoice: "ইনভয়েস", voucher: "ভাউচার", receipt: "রিসিট", capitalStatement: "মূলধন বিবরণী",
+  docPreview: "প্রিভিউ", docDownload: "PDF ডাউনলোড", docPreparing: "PDF তৈরি হচ্ছে…", docReady: "PDF ডাউনলোড হয়েছে", docFailed: "PDF তৈরি করা গেল না। প্রিভিউ খুলে Print → Save as PDF ব্যবহার করুন।",
+  langBangla: "বাংলা", langEnglish: "English",
+  invoiceSettings: "ইনভয়েস ও ডকুমেন্ট", invoiceSettingsHelp: "প্রতিটি ইনভয়েস, ভাউচার, রিসিট ও বিবরণীতে এগুলো দেখাবে।",
+  logo: "লোগো", logoHelp: "PNG বা JPG। সাইজ নিজে থেকেই ঠিক হয়ে যাবে।", uploadLogo: "লোগো আপলোড", removeLogo: "সরান", logoTooBig: "ছবিটা ব্যবহার করা গেল না। ছোট PNG বা JPG দিন।",
+  tagline: "ট্যাগলাইন", website: "ওয়েবসাইট", paymentInfo: "পেমেন্টের তথ্য", paymentInfoPh: "বিকাশ (পার্সোনাল): 01XXXXXXXXX\nব্যাংক: সিটি ব্যাংক, A/C 123…",
+  policyNote: "রিটার্ন / ওয়ারেন্টি নীতি", policyNotePh: "ম্যানুফ্যাকচারিং ত্রুটিতে ৭ দিনের মধ্যে রিপ্লেসমেন্ট…", thankYou: "ধন্যবাদ বার্তা", thankYouPh: "আমাদের থেকে কেনাকাটার জন্য ধন্যবাদ!",
+  signatory: "অনুমোদনকারী (নাম / পদবি)", signatoryPh: "ইফতেখার রসুল, ম্যানেজিং পার্টনার", previewInvoice: "নমুনা দেখুন",
 };
 
 export const dict = { en, bn };

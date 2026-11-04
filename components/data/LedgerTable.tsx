@@ -11,6 +11,8 @@ import { Menu, MenuTrigger, MenuContent, MenuItem, Dialog, DialogContent } from 
 import { Textarea, Field } from "@/components/ui/form";
 import { EmptyState } from "@/components/shell/Page";
 import { reverseTxn } from "@/app/actions";
+import { DocumentMenu } from "@/components/documents";
+import { docNo } from "@/lib/documents/numbers";
 import { fmtDate, fmtMoney, type Dict, type Lang } from "@/lib/i18n";
 import type { Txn } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
@@ -99,19 +101,26 @@ export function LedgerTable({ rows, t, lang, variant, businessId, canWrite, acco
       cell: ({ row }) => row.original.status === "reversed"
         ? <Badge variant="warning" title={row.original.reversal_reason ?? ""}><Undo2 /> {t.reversed}</Badge> : null,
     });
-    if (canWrite) {
-      cols.push({
-        id: "actions", header: () => <span className="sr-only">{t.actions}</span>, enableSorting: false, enableHiding: false, meta: { className: "w-10 pr-2" },
-        cell: ({ row }) => row.original.status === "posted" ? (
-          <Menu>
-            <MenuTrigger asChild><Button variant="ghost" size="icon-sm" aria-label={t.actions}><MoreHorizontal /></Button></MenuTrigger>
-            <MenuContent>
-              <MenuItem onSelect={() => setReversing(row.original)} className="text-destructive"><Undo2 className="!text-destructive" /> {t.reverse}</MenuItem>
-            </MenuContent>
-          </Menu>
-        ) : null,
-      });
-    }
+    cols.push({
+      id: "actions", header: () => <span className="sr-only">{t.actions}</span>, enableSorting: false, enableHiding: false, meta: { className: "w-20 pr-2" },
+      cell: ({ row }) => {
+        const r = row.original;
+        const label = `${r.txn_type === "expense" || r.txn_type === "withdrawal" || r.txn_type === "transfer" ? t.voucher : t.receipt} · ${docNo(r.txn_type, r.doc_no)}`;
+        return (
+          <div className="flex items-center justify-end gap-0.5">
+            <DocumentMenu t={t} href={`/doc/voucher/${r.id}`} label={label} variant="ghost" iconOnly />
+            {canWrite && r.status === "posted" && (
+              <Menu>
+                <MenuTrigger asChild><Button variant="ghost" size="icon-sm" aria-label={t.actions}><MoreHorizontal /></Button></MenuTrigger>
+                <MenuContent>
+                  <MenuItem onSelect={() => setReversing(r)} className="text-destructive"><Undo2 className="!text-destructive" /> {t.reverse}</MenuItem>
+                </MenuContent>
+              </Menu>
+            )}
+          </div>
+        );
+      },
+    });
     return cols;
   }, [t, lang, variant, accounts, partners, canWrite]);
 
