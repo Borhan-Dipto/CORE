@@ -554,3 +554,18 @@ export async function saveNotifyPrefs(prefs: { email: boolean; weekly: boolean }
   if (error) return fail(error);
   return ok("saved");
 }
+
+export async function sendTestEmail(): Promise<FormState> {
+  const { sendTest } = await import("@/lib/notify/mail");
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.email) return fail({ message: "not_authorized" });
+  const { data: prof } = await supabase.from("profiles").select("full_name, language").eq("id", user.id).maybeSingle();
+  const err = await sendTest(user.email, prof?.full_name ?? user.email, prof?.language ?? "bn");
+  if (err) {
+    console.error("[CORE] test mail", err);
+    const { t } = await getT();
+    return { error: err === "not_configured" ? t.mailNotConfigured : `${t.mailFailed} (${err.slice(0, 160)})`, at: Date.now() };
+  }
+  return { ok: (await getT()).t.mailSent + " " + user.email, at: Date.now() };
+}

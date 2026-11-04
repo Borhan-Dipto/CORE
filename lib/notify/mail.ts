@@ -40,6 +40,18 @@ function render(n: Outgoing) {
   return { subject: title, html, text: `${title}\n\n${body}\n\n${url}` };
 }
 
+/** Sends one test email and returns the SMTP error message, if any. */
+export async function sendTest(to: string, name: string, language: string | null): Promise<string | null> {
+  if (!mailConfigured()) return "not_configured";
+  try {
+    const m = render({ id: "test", email: to, name, language, kind: "test", payload: { business: "CORE" }, link: "/account" });
+    await mailer().sendMail({ from: `"${process.env.MAIL_FROM_NAME || "CORE"}" <${process.env.MAIL_FROM || process.env.SMTP_USER}>`, to, subject: m.subject, html: m.html, text: m.text });
+    return null;
+  } catch (e) {
+    return (e as Error).message;
+  }
+}
+
 /** Sends each email; returns ids that failed. */
 export async function sendAll(list: Outgoing[]): Promise<string[]> {
   if (!mailConfigured() || !list.length) return list.map((n) => n.id);

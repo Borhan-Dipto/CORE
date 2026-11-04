@@ -161,5 +161,17 @@ export function NotifyPrefsForm({ t, initial }: { t: Dict; initial: { email: boo
       </button>
     </label>
   );
-  return <div className="grid gap-3">{row("email", t.notifyEmail, t.notifyEmailHint)}{row("weekly", t.notifyWeekly, t.notifyWeeklyHint)}</div>;
+  const [testing, setTesting] = React.useState(false);
+  async function test() {
+    setTesting(true);
+    const r = await A.sendTestEmail();
+    setTesting(false);
+    if (r.error) toast.error(r.error, { duration: 10000 }); else toast.success(r.ok);
+  }
+  return (
+    <div className="grid gap-3">
+      {row("email", t.notifyEmail, t.notifyEmailHint)}{row("weekly", t.notifyWeekly, t.notifyWeeklyHint)}
+      <div><Button type="button" variant="outline" size="sm" onClick={test} loading={testing}>{t.sendTestEmail}</Button></div>
+    </div>
+  );
 }

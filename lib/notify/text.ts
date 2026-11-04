@@ -67,6 +67,9 @@ export function notificationText(kind: string, p: P, lang: NotifLang): { title: 
           : `${day(p.from, lang)} – ${day(p.to, lang)}: ${Number(p.orders ?? 0)} orders, revenue ${money(p.revenue, lang)}, ad spend ${money(p.ad_spend, lang)}, net ${net < 0 ? "loss" : "profit"} ${money(net, lang)}.`,
       };
     }
+    case "test":
+      return { title: bn ? "CORE থেকে পরীক্ষামূলক ইমেইল" : "Test email from CORE",
+               body: bn ? "এই ইমেইলটা পেয়ে থাকলে CORE-এর ইমেইল নোটিফিকেশন ঠিকঠাক কাজ করছে।" : "If you received this, CORE email notifications are working." };
     default:
       return { title: biz, body: "" };
   }
