@@ -18,7 +18,7 @@ export function Kpi({ label, value, definition, hint, tone, icon, delta, feature
   const good = d ? (d.invert ? d.pct! <= 0 : d.pct! >= 0) : false;
   return (
     <Card className={cn("relative flex flex-col gap-2 overflow-hidden p-4 sm:gap-3 sm:p-5",
-      featured && "border-hairline/50 bg-[radial-gradient(120%_140%_at_100%_0%,var(--glow),transparent_60%),linear-gradient(180deg,var(--card),var(--card))] sm:p-6", className)}>
+      featured && "dark border-hairline/50 text-card-foreground bg-[radial-gradient(120%_140%_at_100%_0%,var(--glow),transparent_60%),linear-gradient(180deg,var(--card),var(--card))] sm:p-6", className)}>
       {featured && <span aria-hidden className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-hairline to-transparent" />}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
@@ -32,7 +32,8 @@ export function Kpi({ label, value, definition, hint, tone, icon, delta, feature
         {icon && <span className="shrink-0 text-muted-foreground/70 [&_svg]:size-4">{icon}</span>}
       </div>
       <p className={cn("font-display tabular truncate font-semibold", featured ? "text-[34px] leading-none sm:text-[44px]" : "text-[24px] leading-tight sm:text-[28px]",
-        tone === "positive" && "text-success", tone === "negative" && "text-destructive")}>{value}</p>
+        featured && tone !== "negative" ? "bg-gradient-to-b from-[#f5e3b5] to-[#c49b52] bg-clip-text text-transparent"
+          : [tone === "positive" && "text-success", tone === "negative" && "text-destructive"])}>{value}</p>
       {(hint || d) && (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           {d && (

@@ -51,7 +51,7 @@ export function Sidebar({ sections, collapsed, onToggle, labels }: {
   sections: NavSection[]; collapsed: boolean; onToggle: () => void; labels: { collapse: string; expand: string };
 }) {
   return (
-    <aside className={cn("sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border bg-sidebar transition-[width] duration-200 lg:flex", collapsed ? "w-[60px]" : "w-60")}>
+    <aside className={cn("dark sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border bg-sidebar text-foreground transition-[width] duration-200 lg:flex", collapsed ? "w-[60px]" : "w-60")}>
       <div className={cn("flex h-14 items-center border-b border-border", collapsed ? "justify-center" : "px-4")}>
         <Logo collapsed={collapsed} />
       </div>

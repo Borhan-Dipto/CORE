@@ -48,7 +48,7 @@ export function AppShell({ children, t, lang, theme, isOwner, user, businesses, 
             <DialogPrimitive.Trigger asChild>
               <Button variant="ghost" size="icon-sm" className="lg:hidden" aria-label={t.menu}><MenuIcon /></Button>
             </DialogPrimitive.Trigger>
-            <SheetContent label={t.menu}>
+            <SheetContent label={t.menu} className="dark bg-sidebar text-foreground">
               <div className="flex h-14 items-center border-b border-border px-4"><Logo /></div>
               <div className="flex-1 overflow-y-auto p-3"><NavList sections={sections} onNavigate={() => setMobileOpen(false)} /></div>
             </SheetContent>
