@@ -33,7 +33,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         <>
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <Kpi label={t.kpiRevenue} value={fmtMoney(sum("revenue"), lang)} definition={t.kpiRevenueDef} icon={<Building2 />} hint={`${fmtNum(active.length, lang)} ${t.activeBusinesses.toLowerCase()}`} />
-            <Kpi label={t.kpiNet} value={fmtMoney(sum("net_profit"), lang, { sign: true })} definition={t.kpiNetDef} icon={<Receipt />} tone={sum("net_profit") < 0 ? "negative" : sum("net_profit") > 0 ? "positive" : undefined} />
+            <Kpi featured className="col-span-2 xl:col-span-1" label={t.kpiNet} value={fmtMoney(sum("net_profit"), lang, { sign: true })} definition={t.kpiNetDef} icon={<Receipt />} tone={sum("net_profit") < 0 ? "negative" : sum("net_profit") > 0 ? "positive" : undefined} />
             <Kpi label={t.totalAdSpend} value={fmtMoney(sum("ad_spend"), lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} />
             <Kpi label={t.totalCash} value={fmtMoney(sum("cash_balance"), lang)} definition={t.kpiCashDef} icon={<Wallet />}
               tone={sum("cash_balance") < 0 ? "negative" : undefined} />

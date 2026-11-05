@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = {
   width: "device-width", initialScale: 1,
-  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#f8fafc" }, { media: "(prefers-color-scheme: dark)", color: "#101113" }],
+  themeColor: "#0d1015",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -25,7 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" />
       </head>
       <body className="min-h-dvh">
         {children}

@@ -125,7 +125,7 @@ body{font-family:'DocSans',system-ui,sans-serif;color:#0a0a0a;font-size:10.5pt;l
 .r,.totals,.amountbox .v,.summary .v,.meta{font-variant-numeric:tabular-nums}
 .doc{position:relative}
 .bar{height:4px;background:#0a0a0a;border-radius:2px;margin-bottom:18px;position:relative;overflow:hidden}
-.bar:after{content:'';position:absolute;right:0;top:0;bottom:0;width:28%;background:#2563eb}
+.bar:after{content:'';position:absolute;right:0;top:0;bottom:0;width:28%;background:linear-gradient(90deg,#c9a25c,#ecd39a)}
 .head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}
 .brand{display:flex;gap:14px;align-items:flex-start;min-width:0}
 .logo{max-height:60px;max-width:150px;object-fit:contain}
@@ -166,7 +166,7 @@ table.items th.r{text-align:right}table.items th.c{text-align:center}
 .totals{width:270px;border-collapse:collapse;font-size:9.5pt;flex:none}
 .totals td{padding:4px 0}.totals td:last-child{text-align:right;font-weight:500}
 .totals .grand td{border-top:1.5px solid #0a0a0a;padding-top:8px;font-size:12pt;font-weight:700}
-.totals .due td{color:#1d4ed8;font-weight:700}
+.totals .due td{color:#8f6c2e;font-weight:700}
 .stampwrap{position:relative;height:0}
 .stamp{position:absolute;right:300px;top:-6px;transform:rotate(-10deg);border:2.5px solid currentColor;border-radius:8px;padding:5px 16px;font-weight:700;font-size:17pt;letter-spacing:.12em;opacity:.8;white-space:nowrap}
 .stamp.bn{letter-spacing:0}
@@ -438,7 +438,7 @@ table.rt tr.tot td{font-weight:700;border-top:1.5px solid #0a0a0a;border-bottom:
 table.rt tr.sub td{font-weight:600;background:#fafafa}
 table.rt td.ind{padding-left:20px;color:#6b7280}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.meter{height:5px;border-radius:3px;background:#eef0f3;overflow:hidden;margin-top:4px;position:relative}.meter i{display:block;height:100%;background:#2563eb;border-radius:3px}
+.meter{height:5px;border-radius:3px;background:#eef0f3;overflow:hidden;margin-top:4px;position:relative}.meter i{display:block;height:100%;background:#b8924a;border-radius:3px}
 .chart{border:1px solid #e5e7eb;border-radius:10px;padding:10px 10px 4px;break-inside:avoid}
 .note{font-size:8pt;color:#6b7280;margin-top:6px}
 `;
@@ -494,7 +494,7 @@ function reportBody(d: Extract<DocData, { kind: "report" }>, lang: DocLang, t: L
   const W = 700, H = 120, bw = days.length ? W / days.length : W;
   const bars = days.map((x, i) => {
     const h = Math.max(x.revenue > 0 ? 2 : 0, (x.revenue / maxV) * (H - 16));
-    return `<rect x="${(i * bw + bw * 0.15).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" fill="#2563eb"/>`;
+    return `<rect x="${(i * bw + bw * 0.15).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" fill="#b8924a"/>`;
   }).join("");
   const step = Math.max(1, Math.ceil(days.length / 8));
   const labels = days.map((x, i) => i % step === 0 ? `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H + 12}" text-anchor="middle" font-size="9" fill="#6b7280">${esc(new Intl.DateTimeFormat(lang === "bn" ? "bn-BD" : "en-GB", { day: "numeric", month: "short", timeZone: "Asia/Dhaka" }).format(new Date(x.day + "T00:00:00+06:00")))}</text>` : "").join("");

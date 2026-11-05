@@ -9,7 +9,7 @@ export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDiv
   return <div className={cn("flex flex-col gap-1 px-5 pt-5", className)} {...props} />;
 }
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("text-[15px] font-semibold leading-tight", className)} {...props} />;
+  return <h3 className={cn("text-[15px] font-semibold leading-tight tracking-[-0.005em]", className)} {...props} />;
 }
 export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn("text-[13px] text-muted-foreground", className)} {...props} />;

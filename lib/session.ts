@@ -11,8 +11,9 @@ export async function getLang(): Promise<Lang> {
   return (await cookies()).get("lang")?.value === "en" ? "en" : "bn";
 }
 export async function getTheme(): Promise<Theme> {
-  const v = (await cookies()).get("theme")?.value;
-  return v === "dark" || v === "system" ? v : "light";
+  // "core-theme" (new look): graphite dark by default; light/system only when chosen
+  const v = (await cookies()).get("core-theme")?.value;
+  return v === "light" || v === "system" ? v : "dark";
 }
 export async function getT() {
   const lang = await getLang();

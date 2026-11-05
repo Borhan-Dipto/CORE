@@ -94,8 +94,8 @@ export async function setLang(lang: "bn" | "en") {
 }
 
 export async function setTheme(theme: "light" | "dark" | "system") {
-  const v = ["light", "dark", "system"].includes(theme) ? theme : "light";
-  (await cookies()).set("theme", v, { path: "/", maxAge: YEAR, sameSite: "lax" });
+  const v = ["light", "dark", "system"].includes(theme) ? theme : "dark";
+  (await cookies()).set("core-theme", v, { path: "/", maxAge: YEAR, sameSite: "lax" });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) await supabase.from("profiles").update({ theme: v }).eq("id", user.id);

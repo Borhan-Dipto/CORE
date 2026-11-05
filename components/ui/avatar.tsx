@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-const PALETTE = ["#3b82f6", "#16a34a", "#d97706", "#8b5cf6", "#0ea5e9", "#db2777", "#0f766e", "#64748b"];
+const PALETTE = ["#a8843f", "#4f6d93", "#3f8f72", "#b5683f", "#6f5a9c", "#5b6573", "#2f7f86", "#8e4256"];
 
 export function colorFor(seed: string) {
   let h = 0;
@@ -16,7 +16,7 @@ export function initials(name: string) {
 export function Avatar({ name, seed, size = "md", square, className }: { name: string; seed?: string; size?: "sm" | "md" | "lg"; square?: boolean; className?: string }) {
   const s = { sm: "size-6 text-[10px]", md: "size-8 text-xs", lg: "size-10 text-sm" }[size];
   return (
-    <span aria-hidden className={cn("inline-flex shrink-0 items-center justify-center font-semibold text-white", square ? "rounded-md" : "rounded-full", s, className)}
+    <span aria-hidden className={cn("inline-flex shrink-0 items-center justify-center font-semibold text-white ring-1 ring-white/10", square ? "rounded-md" : "rounded-full", s, className)}
       style={{ background: colorFor(seed ?? name) }}>
       {initials(name)}
     </span>

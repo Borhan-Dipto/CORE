@@ -18,7 +18,7 @@ export function NavList({ sections, collapsed, onNavigate }: { sections: NavSect
     <nav className="flex flex-col gap-5">
       {sections.map((s, i) => (
         <div key={i} className="flex flex-col gap-0.5">
-          {s.label && !collapsed && <p className="px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{s.label}</p>}
+          {s.label && !collapsed && <p className="px-2.5 pb-1.5 text-[12px] font-medium text-muted-foreground/80">{s.label}</p>}
           {s.label && collapsed && <div className="mx-2.5 mb-1 h-px bg-border" />}
           {s.items.map((it) => {
             const active = isActive(path, it.href, it.exact);
@@ -29,12 +29,13 @@ export function NavList({ sections, collapsed, onNavigate }: { sections: NavSect
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group flex h-9 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors",
-                  active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                  "group relative flex h-9 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium transition-colors",
+                  active ? "bg-sidebar-active text-foreground before:absolute before:inset-y-2 before:-left-3 before:w-[3px] before:rounded-r-full before:bg-brand"
+                    : "text-muted-foreground hover:bg-sidebar-active/70 hover:text-foreground",
                   collapsed && "justify-center px-0",
                 )}
               >
-                <it.icon className={cn("size-4 shrink-0", active && "text-brand")} aria-hidden />
+                <it.icon className={cn("size-[17px] shrink-0", active ? "text-brand" : "opacity-80")} aria-hidden />
                 {!collapsed && <span className="truncate">{it.label}</span>}
               </Link>
             );

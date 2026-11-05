@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Circle, Landmark, Megaphone, Receipt, Wallet, Users, TrendingUp, ShoppingBag, Clock } from "lucide-react";
+import { ArrowRight, CheckCircle2, Circle, Megaphone, Receipt, Wallet, Users, TrendingUp, ShoppingBag, Clock } from "lucide-react";
 import { Page } from "@/components/shell/Page";
 import { Kpi } from "@/components/data/Kpi";
 import { DateRange } from "@/components/data/DateRange";
@@ -76,13 +76,12 @@ export default async function Dashboard({ params, searchParams }: { params: Prom
         </Notice>
       )}
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <Kpi label={t.kpiRevenue} value={fmtMoney(pl.revenue, lang)} definition={t.kpiRevenueDef} icon={<ShoppingBag />} delta={vs(pl.revenue, prevPl?.revenue)} hint={`${fmtNum(os.delivered_count, lang)} ${t.orderStatuses.delivered}`} />
-        <Kpi label={t.kpiNet} value={fmtMoney(pl.net_profit, lang, { sign: true })} definition={t.kpiNetDef} icon={<TrendingUp />} delta={vs(pl.net_profit, prevPl?.net_profit)} tone={pl.net_profit < 0 ? "negative" : pl.net_profit > 0 ? "positive" : undefined}
+        <Kpi featured className="col-span-2" label={t.kpiNet} value={fmtMoney(pl.net_profit, lang, { sign: true })} definition={t.kpiNetDef} icon={<TrendingUp />} delta={vs(pl.net_profit, prevPl?.net_profit)} tone={pl.net_profit < 0 ? "negative" : pl.net_profit > 0 ? "positive" : undefined}
           hint={`${t.kpiGross}: ${fmtMoney(pl.gross_profit, lang)}`} />
+        <Kpi label={t.kpiRevenue} value={fmtMoney(pl.revenue, lang)} definition={t.kpiRevenueDef} icon={<ShoppingBag />} delta={vs(pl.revenue, prevPl?.revenue)} hint={`${fmtNum(os.delivered_count, lang)} ${t.orderStatuses.delivered}`} />
         <Kpi label={t.kpiAdSpend} value={fmtMoney(s.ad_spend, lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} delta={vs(s.ad_spend, prevS?.ad_spend, true)} hint={pl.roas !== null ? `${t.kpiRoas} ${fmtNum(pl.roas, lang, 1)}×` : undefined} />
         <Kpi label={t.kpiCash} value={fmtMoney(s.cash_balance, lang)} definition={t.kpiCashDef} icon={<Wallet />} tone={s.cash_balance < 0 ? "negative" : undefined} />
         <Kpi label={t.kpiExpenses} value={fmtMoney(s.expenses, lang)} definition={t.kpiExpensesDef} icon={<Receipt />} delta={vs(s.expenses, prevS?.expenses, true)} hint={`${fmtNum(s.expense_count, lang)} ${t.expenses.toLowerCase()}`} />
-        <Kpi label={t.kpiInvestments} value={fmtMoney(s.investments, lang)} definition={t.kpiInvestmentsDef} icon={<Landmark />} />
         <Kpi label={t.kpiPipeline} value={fmtMoney(os.pipeline_value, lang)} definition={t.kpiPipelineDef} icon={<Clock />} hint={`${fmtNum(os.pipeline_count, lang)} ${t.orders}`} />
         <Kpi label={t.kpiUncollected} value={fmtMoney(os.uncollected, lang)} definition={t.kpiUncollectedDef} icon={<Wallet />} hint={`${fmtNum(os.uncollected_count, lang)} ${t.orders}`} tone={os.uncollected > 0 ? "negative" : undefined} />
       </div>
