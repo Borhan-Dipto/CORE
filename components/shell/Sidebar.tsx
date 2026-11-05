@@ -47,17 +47,19 @@ export function NavList({ sections, collapsed, onNavigate }: { sections: NavSect
   );
 }
 
-export function Sidebar({ sections, collapsed, onToggle, labels }: {
-  sections: NavSection[]; collapsed: boolean; onToggle: () => void; labels: { collapse: string; expand: string };
+export function Sidebar({ sections, collapsed, onToggle, labels, footer }: {
+  sections: NavSection[]; collapsed: boolean; onToggle: () => void; labels: { collapse: string; expand: string }; footer?: React.ReactNode;
 }) {
   return (
-    <aside className={cn("dark sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border bg-sidebar text-foreground transition-[width] duration-200 lg:flex", collapsed ? "w-[60px]" : "w-60")}>
-      <div className={cn("flex h-14 items-center border-b border-border", collapsed ? "justify-center" : "px-4")}>
+    <aside className={cn("dark relative sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border bg-sidebar text-foreground transition-[width] duration-200 lg:flex", collapsed ? "w-[60px]" : "w-60")}>
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(80%_100%_at_0%_0%,rgb(212_175_106/0.10),transparent_70%)]" />
+      <div className={cn("relative flex h-14 items-center border-b border-border", collapsed ? "justify-center" : "px-4")}>
         <Logo collapsed={collapsed} />
       </div>
       <div className={cn("flex-1 overflow-y-auto py-4", collapsed ? "px-2" : "px-3")}>
         <NavList sections={sections} collapsed={collapsed} />
       </div>
+      {footer && !collapsed && <div className="px-3 pb-2">{footer}</div>}
       <div className={cn("border-t border-border p-2", collapsed && "flex justify-center")}>
         <button onClick={onToggle} className="flex h-8 w-full items-center gap-2 rounded-md px-2.5 text-[13px] text-muted-foreground hover:bg-accent hover:text-foreground justify-center lg:justify-start"
           aria-label={collapsed ? labels.expand : labels.collapse}>

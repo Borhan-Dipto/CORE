@@ -94,7 +94,7 @@ export function OrdersTable({ rows, t, lang, businessId, empty, canWrite }: { ro
       id: "status", accessorFn: (r) => t.orderStatuses[r.status], header: t.status, meta: { label: t.status },
       cell: ({ row }) => (
         <div className="flex flex-wrap items-center gap-1">
-          <Badge variant={STATUS_TONE[row.original.status]}>{t.orderStatuses[row.original.status]}</Badge>
+          <Badge variant={STATUS_TONE[row.original.status]} className="before:size-1.5 before:rounded-full before:bg-current before:content-['']">{t.orderStatuses[row.original.status]}</Badge>
           {row.original.status === "delivered" && <Badge variant={row.original.collected ? "success" : "warning"}>{row.original.collected ? t.collected : t.notCollected}</Badge>}
         </div>
       ),

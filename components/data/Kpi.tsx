@@ -4,15 +4,18 @@ import { Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Tooltip } from "@/components/ui/overlay";
 import { cn } from "@/lib/utils";
+import { Sparkline } from "@/components/data/Sparkline";
 
 /** KPI card: label, value, plain-language definition on hover/tap. */
-export function Kpi({ label, value, definition, hint, tone, icon, delta, featured, className }: {
+export function Kpi({ label, value, definition, hint, tone, icon, delta, featured, className, spark, sparkColor }: {
   label: string; value: string; definition?: string; hint?: string; tone?: "positive" | "negative" | "neutral";
   icon?: React.ReactNode;
   /** change vs previous period; `invert` when going down is good (costs) */
   delta?: { pct: number | null; label: string; invert?: boolean; lang?: "bn" | "en" };
   /** the one headline figure of a page: larger serif numerals on a brass-lit panel */
   featured?: boolean; className?: string;
+  /** daily values for a small trend line along the bottom of the card */
+  spark?: number[]; sparkColor?: string;
 }) {
   const d = delta && delta.pct !== null && Number.isFinite(delta.pct) ? delta : null;
   const good = d ? (d.invert ? d.pct! <= 0 : d.pct! >= 0) : false;
@@ -29,7 +32,7 @@ export function Kpi({ label, value, definition, hint, tone, icon, delta, feature
             </Tooltip>
           )}
         </div>
-        {icon && <span className="shrink-0 text-muted-foreground/70 [&_svg]:size-4">{icon}</span>}
+        {icon && <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand ring-1 ring-brand/15 [&_svg]:size-[18px]">{icon}</span>}
       </div>
       <p className={cn("font-display tabular truncate font-semibold", featured ? "text-[34px] leading-none sm:text-[44px]" : "text-[24px] leading-tight sm:text-[28px]",
         featured && tone !== "negative" ? "bg-gradient-to-b from-[#f5e3b5] to-[#c49b52] bg-clip-text text-transparent"
@@ -44,6 +47,9 @@ export function Kpi({ label, value, definition, hint, tone, icon, delta, feature
           )}
           {hint && <span className="truncate">{hint}</span>}
         </div>
+      )}
+      {spark && spark.length > 1 && (
+        <div className="-mx-4 -mb-4 mt-auto h-12 sm:-mx-5 sm:-mb-5"><Sparkline values={spark} color={sparkColor} className="h-full" /></div>
       )}
     </Card>
   );

@@ -9,7 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from
 import { Avatar } from "@/components/ui/avatar";
 import { getBusinesses, getContext, getT } from "@/lib/session";
 import { resolveRange } from "@/lib/range";
-import { fmtMoney, fmtNum } from "@/lib/i18n";
+import { fmtDate, fmtMoney, fmtNum } from "@/lib/i18n";
+import { Hero } from "@/components/shell/Hero";
+import { LogoMark } from "@/components/shell/Logo";
 
 type Row = { business_id: string; name: string; status: string; expenses: number; ad_spend: number; income: number; investments: number; cash_balance: number; partners: number; revenue: number; net_profit: number };
 
@@ -23,21 +25,27 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   const sum = (k: keyof Row) => active.reduce((s, r) => s + Number(r[k]), 0);
   const first = name.split(/\s+/)[0];
 
+  const actions = <>{businesses.length > 0 && <DateRange t={t} current={range.key} from={range.from} to={range.to} />}{isOwner && <NewBusinessDialog t={t} />}</>;
+  const net = sum("net_profit");
+  const hero = businesses.length === 0 ? undefined : (
+    <Hero mark={<LogoMark className="size-12 sm:size-14" />} title={`${t.welcome}, ${first}`}
+      subtitle={[isOwner ? t.greetingOwner : t.greetingPartner, range.key === "all" ? null : `${fmtDate(range.from, lang)} – ${fmtDate(range.to, lang)}`].filter(Boolean).join(" · ")}
+      actions={actions} headlineLabel={t.kpiNet} headline={fmtMoney(net, lang, { sign: true })} headlineTone={net < 0 ? "negative" : undefined}
+      stats={[
+        { label: t.kpiRevenue, value: fmtMoney(sum("revenue"), lang, { compact: true }) },
+        { label: t.totalAdSpend, value: fmtMoney(sum("ad_spend"), lang, { compact: true }) },
+        { label: t.totalCash, value: fmtMoney(sum("cash_balance"), lang, { compact: true }), tone: sum("cash_balance") < 0 ? "bad" : undefined },
+        { label: t.activeBusinesses, value: fmtNum(active.length, lang) },
+      ]} />
+  );
   return (
-    <Page wide title={`${t.welcome}, ${first}`} description={isOwner ? t.greetingOwner : t.greetingPartner}
-      actions={<>{businesses.length > 0 && <DateRange t={t} current={range.key} from={range.from} to={range.to} />}{isOwner && <NewBusinessDialog t={t} />}</>}>
+    <Page wide title={`${t.welcome}, ${first}`} description={isOwner ? t.greetingOwner : t.greetingPartner} actions={actions} hero={hero}>
       {businesses.length === 0 ? (
         <EmptyState icon={Building2} title={isOwner ? t.newBusiness : t.noBusinessesPartner} description={isOwner ? t.noBusinessesOwner : undefined}
           action={isOwner ? <NewBusinessDialog t={t} /> : undefined} />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <Kpi label={t.kpiRevenue} value={fmtMoney(sum("revenue"), lang)} definition={t.kpiRevenueDef} icon={<Building2 />} hint={`${fmtNum(active.length, lang)} ${t.activeBusinesses.toLowerCase()}`} />
-            <Kpi featured className="col-span-2 xl:col-span-1" label={t.kpiNet} value={fmtMoney(sum("net_profit"), lang, { sign: true })} definition={t.kpiNetDef} icon={<Receipt />} tone={sum("net_profit") < 0 ? "negative" : sum("net_profit") > 0 ? "positive" : undefined} />
-            <Kpi label={t.totalAdSpend} value={fmtMoney(sum("ad_spend"), lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} />
-            <Kpi label={t.totalCash} value={fmtMoney(sum("cash_balance"), lang)} definition={t.kpiCashDef} icon={<Wallet />}
-              tone={sum("cash_balance") < 0 ? "negative" : undefined} />
-          </div>
+
 
           {active.length > 1 && (
             <Card className="overflow-hidden">

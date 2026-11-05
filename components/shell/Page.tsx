@@ -1,18 +1,20 @@
 import { cn } from "@/lib/utils";
 
 /** Consistent page frame: title, description, primary actions, then content. */
-export function Page({ title, description, actions, children, className, wide }: {
+export function Page({ title, description, actions, children, className, wide, hero }: {
   title: string; description?: string; actions?: React.ReactNode; children: React.ReactNode; className?: string; wide?: boolean;
+  /** replaces the plain title row with a signature panel (dashboard, overview) */
+  hero?: React.ReactNode;
 }) {
   return (
     <div className={cn("mx-auto w-full px-4 py-6 sm:px-6 lg:py-8", wide ? "max-w-[1400px]" : "max-w-6xl", className)}>
-      <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      {hero ? <div className="mb-6">{hero}</div> : <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="font-display text-[28px] font-medium leading-tight sm:text-[32px]">{title}</h1>
           {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-      </div>
+      </div>}
       <div className="grid gap-6">{children}</div>
     </div>
   );

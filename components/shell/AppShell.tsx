@@ -41,7 +41,14 @@ export function AppShell({ children, t, lang, theme, isOwner, user, businesses, 
 
   return (
     <div className="flex min-h-dvh">
-      <Sidebar sections={sections} collapsed={collapsed} onToggle={toggle} labels={{ collapse: t.collapse, expand: t.expand }} />
+      <Sidebar sections={sections} collapsed={collapsed} onToggle={toggle} labels={{ collapse: t.collapse, expand: t.expand }}
+        footer={
+          <a href="/account" className="flex items-center gap-3 rounded-xl border border-border bg-white/[0.03] p-2.5 transition hover:bg-white/[0.06]">
+            <Avatar name={user.name || user.email} seed={user.email} size="md" />
+            <span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-semibold">{user.name || user.email}</span>
+              <span className="block truncate text-[11px] text-brand">{isOwner ? t.owner : t.partner}</span></span>
+          </a>
+        } />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/85 px-3 backdrop-blur-md sm:px-5">
           <DialogPrimitive.Root open={mobileOpen} onOpenChange={setMobileOpen}>

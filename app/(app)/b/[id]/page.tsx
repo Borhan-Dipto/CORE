@@ -15,7 +15,8 @@ import { getPnl, getOrderSummary } from "@/lib/sales";
 import { chartRange, pctChange, previousRange } from "@/lib/range";
 import { getCampaignPerformance } from "@/lib/campaignPerf";
 import { Notice } from "@/components/shell/Page";
-import { fmtMoney, fmtNum } from "@/lib/i18n";
+import { fmtDate, fmtMoney, fmtNum } from "@/lib/i18n";
+import { Hero, BrassMark } from "@/components/shell/Hero";
 import { cn } from "@/lib/utils";
 
 export default async function Dashboard({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string>> }) {
@@ -50,9 +51,25 @@ export default async function Dashboard({ params, searchParams }: { params: Prom
   const showSetup = p.writable && steps.some((x) => !x.done);
   const capitalTotal = members.reduce((a, m) => a + m.capital, 0);
 
+  const orderDaily = (chartOs ?? os).daily;
+  const netPct = prevPl ? pctChange(pl.net_profit, prevPl.net_profit) : null;
+  const pctTxt = (v: number) => `${v >= 0 ? "▲" : "▼"} ${fmtNum(Math.min(Math.abs(v), 999), lang, Math.abs(v) < 10 ? 1 : 0)}%`;
+  const hero = (
+    <Hero mark={<BrassMark name={business.name} />} title={business.name}
+      subtitle={[business.category, `${fmtDate(range.from === "2000-01-01" ? cr.from : range.from, lang)} – ${fmtDate(range.to, lang)}`].filter(Boolean).join(" · ")}
+      actions={<><DateRange t={t} current={range.key} from={range.from} to={range.to} />{p.writable && <ExpenseDialog t={t} businessId={id} opts={p.opts} />}</>}
+      headlineLabel={t.kpiNet} headline={fmtMoney(pl.net_profit, lang, { sign: true })} headlineTone={pl.net_profit < 0 ? "negative" : undefined}
+      delta={netPct === null ? null : { text: `${pctTxt(netPct)} · ${t.vsPrevious}`, good: netPct >= 0 }}
+      stats={[
+        { label: t.kpiGross, value: fmtMoney(pl.gross_profit, lang, { compact: true }), tone: pl.gross_profit < 0 ? "bad" : undefined },
+        { label: t.orderStatuses.delivered, value: fmtNum(os.delivered_count, lang), note: `${t.unitsSold}: ${fmtNum(os.units_sold, lang)}` },
+        { label: t.kpiRoas, value: pl.roas === null ? "—" : `${fmtNum(pl.roas, lang, 1)}×`, tone: pl.roas !== null && pl.roas < 1 ? "bad" : undefined },
+        { label: t.kpiCash, value: fmtMoney(s.cash_balance, lang, { compact: true }), tone: s.cash_balance < 0 ? "bad" : undefined },
+      ]}
+      trend={orderDaily.map((d) => d.revenue)} trendLabel={t.revenueTrend} />
+  );
   return (
-    <Page wide title={business.name} description={business.category ?? undefined}
-      actions={<><DateRange t={t} current={range.key} from={range.from} to={range.to} />{p.writable && <ExpenseDialog t={t} businessId={id} opts={p.opts} />}</>}>
+    <Page wide title={business.name} hero={hero}>
       {showSetup && (
         <Card className="border-brand/25 bg-brand-soft/40">
           <CardHeader><CardTitle>{t.setupTitle}</CardTitle><CardDescription>{t.setupDesc}</CardDescription></CardHeader>
@@ -76,14 +93,14 @@ export default async function Dashboard({ params, searchParams }: { params: Prom
         </Notice>
       )}
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <Kpi featured className="col-span-2" label={t.kpiNet} value={fmtMoney(pl.net_profit, lang, { sign: true })} definition={t.kpiNetDef} icon={<TrendingUp />} delta={vs(pl.net_profit, prevPl?.net_profit)} tone={pl.net_profit < 0 ? "negative" : pl.net_profit > 0 ? "positive" : undefined}
-          hint={`${t.kpiGross}: ${fmtMoney(pl.gross_profit, lang)}`} />
-        <Kpi label={t.kpiRevenue} value={fmtMoney(pl.revenue, lang)} definition={t.kpiRevenueDef} icon={<ShoppingBag />} delta={vs(pl.revenue, prevPl?.revenue)} hint={`${fmtNum(os.delivered_count, lang)} ${t.orderStatuses.delivered}`} />
-        <Kpi label={t.kpiAdSpend} value={fmtMoney(s.ad_spend, lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} delta={vs(s.ad_spend, prevS?.ad_spend, true)} hint={pl.roas !== null ? `${t.kpiRoas} ${fmtNum(pl.roas, lang, 1)}×` : undefined} />
-        <Kpi label={t.kpiCash} value={fmtMoney(s.cash_balance, lang)} definition={t.kpiCashDef} icon={<Wallet />} tone={s.cash_balance < 0 ? "negative" : undefined} />
-        <Kpi label={t.kpiExpenses} value={fmtMoney(s.expenses, lang)} definition={t.kpiExpensesDef} icon={<Receipt />} delta={vs(s.expenses, prevS?.expenses, true)} hint={`${fmtNum(s.expense_count, lang)} ${t.expenses.toLowerCase()}`} />
-        <Kpi label={t.kpiPipeline} value={fmtMoney(os.pipeline_value, lang)} definition={t.kpiPipelineDef} icon={<Clock />} hint={`${fmtNum(os.pipeline_count, lang)} ${t.orders}`} />
-        <Kpi label={t.kpiUncollected} value={fmtMoney(os.uncollected, lang)} definition={t.kpiUncollectedDef} icon={<Wallet />} hint={`${fmtNum(os.uncollected_count, lang)} ${t.orders}`} tone={os.uncollected > 0 ? "negative" : undefined} />
+        <Kpi label={t.kpiRevenue} value={fmtMoney(pl.revenue, lang)} definition={t.kpiRevenueDef} icon={<ShoppingBag />} delta={vs(pl.revenue, prevPl?.revenue)}
+          spark={orderDaily.map((d) => d.revenue)} />
+        <Kpi label={t.kpiAdSpend} value={fmtMoney(s.ad_spend, lang)} definition={t.kpiAdSpendDef} icon={<Megaphone />} delta={vs(s.ad_spend, prevS?.ad_spend, true)}
+          spark={daily.map((d) => d.ad_spend)} sparkColor="var(--chart-2)" />
+        <Kpi label={t.kpiExpenses} value={fmtMoney(s.expenses, lang)} definition={t.kpiExpensesDef} icon={<Receipt />} delta={vs(s.expenses, prevS?.expenses, true)}
+          spark={daily.map((d) => d.expenses)} sparkColor="var(--chart-4)" />
+        <Kpi label={t.kpiUncollected} value={fmtMoney(os.uncollected, lang)} definition={t.kpiUncollectedDef} icon={<Clock />} tone={os.uncollected > 0 ? "negative" : undefined}
+          hint={`${fmtNum(os.uncollected_count, lang)} ${t.orders} · ${t.kpiPipeline} ${fmtMoney(os.pipeline_value, lang, { compact: true })}`} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
