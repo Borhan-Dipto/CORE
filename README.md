@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/cover.svg" alt="CORE — business operating system" width="720" />
+  <img src="./docs/cover.svg" alt="CORE — business operating system" width="100%" />
 </p>
 
 <p align="center">
